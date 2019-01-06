@@ -13,37 +13,37 @@ generally expect the performance of a flexible statistical learning
 method to be better or worse than an inflexible method. Justify your
 answer.
 #+END_QUOTE
-
+*** (a)
 #+BEGIN_QUOTE
-(a) The sample size /n/ is extremely large, and the number of
-predictors /p/ is small.
+The sample size /n/ is extremely large, and the number of predictors
+/p/ is small.
 #+END_QUOTE
 
 Flexible would be better, as large /n/ and low /p/ reduces the chance of
 fitting the noise in the samples. We can benefit from the low bias of
 a flexible model without too much variance.
-
+*** (b)
 #+BEGIN_QUOTE
-(b) The number of predictors /p/ is extremely large, and the number
-of observations /n/ is small.
+The number of predictors /p/ is extremely large, and the number of
+observations /n/ is small.
 #+END_QUOTE
 
 Flexible would be worse; this is the opposite case to a). We'd likely
 see much more variance from the flexible model due to the high chance
 of changes for other data sets given low /n/, and the curse of
 dimensionality from high /p/.
-
+*** (c)
 #+BEGIN_QUOTE
-(c) The relationship between the predictors and response is highly
+The relationship between the predictors and response is highly
 non-linear.
 #+END_QUOTE
 
 Flexible would be better, as the non-linear nature of the relationship
 implies we need a more complex model. A less flexible model would have
 worse bias.
-
+*** (d)
 #+BEGIN_QUOTE
-(d) The variance of the error terms, i.e. /σ² = Var(ε)/, is extremely
+The variance of the error terms, i.e. /σ² = Var(ε)/, is extremely
 high.
 #+END_QUOTE
 
@@ -51,41 +51,39 @@ Flexible would be worse, as it is likely to over-fit the noise -
 variance would dominate the errors.
 ** Question 2
 #+BEGIN_QUOTE
-Explain whether each scenario is a classiﬁcation or regression
+Explain whether each scenario is a classification or regression
 problem, and indicate whether we are most interested in inference or
 prediction. Finally, provide /n/ and /p/.
 #+END_QUOTE
-
+*** (a)
 #+BEGIN_QUOTE
-(a) We collect a set of data on the top 500 ﬁrms in the US. For each
-ﬁrm we record proﬁt, number of employees, industry and the CEO salary.
-We are interested in understanding which factors affect CEO salary.
+We collect a set of data on the top 500 firms in the US. For each firm
+we record profit, number of employees, industry and the CEO salary. We
+are interested in understanding which factors affect CEO salary.
 #+END_QUOTE
 
 - Regression: the response variable, salary, is known and quantitative.
 - Inference: we want to know what affects the salary.
 - /n/ = 500, /p/ = 3
-
+*** (b)
 #+BEGIN_QUOTE
-(b) We are considering launching a new product and wish to know
-whether it will be a success or a failure. We collect data on 20
-similar products that were previously launched. For each product we
-have recorded whether it was a success or failure, price charged for
-the product, marketing budget, competition price, and ten other
-variables.
+We are considering launching a new product and wish to know whether it
+will be a success or a failure. We collect data on 20 similar products
+that were previously launched. For each product we have recorded
+whether it was a success or failure, price charged for the product,
+marketing budget, competition price, and ten other variables.
 #+END_QUOTE
 
 - Classification: success or failure of product is qualitative.
 - Prediction: we want to know the outcome rather than why.
 - /n/ = 20, /p/ = 13
-
+*** (c)
 #+BEGIN_QUOTE
-(c) We are interest ed in predicting the % change in the USD/Euro
-exchange rate in relation to the weekly changes in the world
-stock markets. Hence we collect weekly data for all of 2012. For
-each week we record the % change in the USD/Euro, the %
-change in the US market, the % change in the British market,
-and the % change in the German market.
+We are interest ed in predicting the % change in the USD/Euro exchange
+rate in relation to the weekly changes in the world stock markets.
+Hence we collect weekly data for all of 2012. For each week we record
+the % change in the USD/Euro, the % change in the US market, the %
+change in the British market, and the % change in the German market.
 #+END_QUOTE
 
 - Regression, as we want to predict the change in an exchange rate
@@ -97,24 +95,24 @@ and the % change in the German market.
 #+BEGIN_QUOTE
 We now revisit the bias-variance decomposition.
 #+END_QUOTE
-
+*** (a)
 #+BEGIN_QUOTE
-(a) Provide a sketch of typical (squared) bias, variance, training
-error, test error, and Bayes (or irreducible) error curves, on a
-single plot, as we go from less flexible statistical learning methods
-towards more flexible approaches. The x-axis should represent the
-amount of flexibility in the method, and the y-axis should represent
-the values for each curve. There should be ﬁve curves. Make sure to
-label each one.
+Provide a sketch of typical (squared) bias, variance, training error,
+test error, and Bayes (or irreducible) error curves, on a single plot,
+as we go from less flexible statistical learning methods towards more
+flexible approaches. The x-axis should represent the amount of
+flexibility in the method, and the y-axis should represent the values
+for each curve. There should be five curves. Make sure to label each
+one.
 #+END_QUOTE
 
 A very rough plot:
 
 [[file:img/ch02q03a.png][Q3 plot]]
-
+*** (b)
 #+BEGIN_QUOTE
-(b) Explain why each of the ﬁve curves has the shape displayed in
-part (a).
+Explain why each of the five curves has the shape displayed in part
+(a).
 #+END_QUOTE
 
 - The (squared) bias gives the error from the lack of capability of
@@ -133,11 +131,11 @@ part (a).
 You will now think of some real-life applications for statistical
 learning.
 #+END_QUOTE
-
+*** (a)
 #+BEGIN_QUOTE
-(a) Describe three real-life applications in which classification might
-be useful. Describe the response, as well as the predictors. Is the
-goal of each application inference or prediction? Explain your answer.
+Describe three real-life applications in which classification might be
+useful. Describe the response, as well as the predictors. Is the goal
+of each application inference or prediction? Explain your answer.
 #+END_QUOTE
 
 - Given a piece of text, determine what language it is. Response is
@@ -149,9 +147,9 @@ goal of each application inference or prediction? Explain your answer.
 - What determines the weather? Response could be sunny, raining etc.
   Predictors could be pressure, temperature, time of year etc.
   Application could be inference, to understand why, or prediction.
-
+*** (b)
 #+BEGIN_QUOTE
-(b) Describe three real-life applications in which regression might be
+Describe three real-life applications in which regression might be
 useful. Describe the response, as well as the predictors. Is the goal
 of each application inference or prediction? Explain your answer.
 #+END_QUOTE
@@ -164,10 +162,10 @@ of each application inference or prediction? Explain your answer.
 - What yield will we get from a crop? Response is amount of crop,
   predictors could be planting date, soil quality, amount of chemicals
   used etc. Predictive.
-
+*** (c)
 #+BEGIN_QUOTE
-(c) Describe three real-life applications in which cluster analysis
-might be useful.
+Describe three real-life applications in which cluster analysis might
+be useful.
 #+END_QUOTE
 
 - What segment of Netflix users like this program?
@@ -176,7 +174,7 @@ might be useful.
 ** Question 5
 #+BEGIN_QUOTE
 What are the advantages and disadvantages of a very flexible (versus a
-less flexible) approach for regression or classiﬁcation? Under what
+less flexible) approach for regression or classification? Under what
 circumstances might a more flexible approach be preferred to a less
 flexible approach? When might a less flexible approach be preferred?
 #+END_QUOTE
@@ -189,7 +187,7 @@ response variable behaves the way it does.
 #+BEGIN_QUOTE
 Describe the differences between a parametric and a non-parametric
 statistical learning approach. What are the advantages of a parametric
-approach to regression or classiﬁcation (as opposed to a non-
+approach to regression or classification (as opposed to a non-
 parametric approach)? What are its disadvantages?
 #+END_QUOTE
 
@@ -214,9 +212,11 @@ observations, three predictors, and one qualitative response variable.
 
 Suppose we wish to use this data set to make a prediction for /Y/ when
 /X1 = X2 = X3 = 0/ using /K/-nearest neighbours.
-
-(a) Compute the Euclidean distance between each observation and the
-test point, /X1 = X2 = X3 = 0/.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Compute the Euclidean distance between each observation and the test
+point, /X1 = X2 = X3 = 0/.
 #+END_QUOTE
 
 The Euclidean distance is the square root of the sum of squared
@@ -230,24 +230,23 @@ distances in each dimension.
 |    4 |    2.236 |
 |    5 |    1.414 |
 |    6 |    1.732 |
-
+*** (b)
 #+BEGIN_QUOTE
-(b) What is our prediction with /K/ = 1? Why?
+What is our prediction with /K/ = 1? Why?
 #+END_QUOTE
 
 Green, as the nearest neighbour with /K/ = 1 is observation 5.
-
+*** (c)
 #+BEGIN_QUOTE
-(c) What is our prediction with /K/ = 3? Why?
+What is our prediction with /K/ = 3? Why?
 #+END_QUOTE
 
 The closest three points are 5, 6 and 2. The prediction is therefore
 red as two of these three points are red.
-
+*** (d)
 #+BEGIN_QUOTE
-(d) If the Bayes decision boundary in this problem is highly non-
-linear, then would we expect the best value for /K/ to be large or
-small? Why?
+If the Bayes decision boundary in this problem is highly non- linear,
+then would we expect the best value for /K/ to be large or small? Why?
 #+END_QUOTE
 
 Small, as high values of K lead to a smoother boundary.
@@ -266,13 +265,13 @@ options(crayon.enabled = FALSE)
 ** Question 8
 #+BEGIN_QUOTE
 This exercise relates to the ~College~ data set, which can be found in
-the ﬁle ~College.csv~.
+the file ~College.csv~.
 #+END_QUOTE
-
+*** (a)
 #+BEGIN_QUOTE
-(a) Use the ~read.csv()~ function to read the data into R . Call the
-loaded data ~college~ . Make sure that you have the directory set to the
-correct location for the data.
+Use the ~read.csv()~ function to read the data into R . Call the
+loaded data ~college~ . Make sure that you have the directory set to
+the correct location for the data.
 #+END_QUOTE
 
 #+BEGIN_SRC R :results output :exports both
@@ -311,12 +310,12 @@ Missing column names filled in: 'X1' [1]
 
 Note that the first column, which is unnamed in the CSV file, has been
 called X1. 
-
+*** (b)
 #+BEGIN_QUOTE
-(b) Look at the data using the ~fix()~ function. You should notice
-that the ﬁrst column is just the name of each university. We don’t
-really want R to treat this as data. However, it may be handy to have
-these names for later.
+Look at the data using the ~fix()~ function. You should notice that
+the first column is just the name of each university. We don’t really
+want R to treat this as data. However, it may be handy to have these
+names for later.
 #+END_QUOTE
 
 As row names are depreciated for tibbles, we'll just rename the
@@ -352,10 +351,10 @@ $ perc.alumni <dbl> 12, 16, 30, 37, 2, 11, 26, 37, 23, 15, 31, 41, 21, 32, ...
 $ Expend      <dbl> 7041, 10527, 8735, 19016, 10922, 9727, 8861, 11487, 116...
 $ Grad.Rate   <dbl> 60, 56, 54, 59, 15, 55, 63, 73, 80, 52, 73, 76, 74, 68,...
 #+end_example
-
+*** (c)
 #+BEGIN_QUOTE
-(c) i. Use the ~summary()~ function to produce a numerical summary of
-the variables in the data set.
+i. Use the ~summary()~ function to produce a numerical summary of the
+variables in the data set.
 #+END_QUOTE
 
 #+BEGIN_SRC R :results output :exports both
@@ -400,10 +399,10 @@ the variables in the data set.
  3rd Qu.:31.00   3rd Qu.:10830   3rd Qu.: 78.00  
  Max.   :64.00   Max.   :56233   Max.   :118.00
 #+end_example
-
+*** (c)
 #+BEGIN_QUOTE
-(c) ii. Use the ~pairs()~ function to produce a scatterplot matrix of
-the ﬁrst ten columns or variables of the data.
+ii. Use the ~pairs()~ function to produce a scatterplot matrix of the
+first ten columns or variables of the data.
 #+END_QUOTE
 
 #+BEGIN_SRC R :exports both :results graphics  :file img/ch02q08cii.png :width 800 :height 800
@@ -467,7 +466,7 @@ are. Now use the ~plot()~ function to produce side-by-side boxplots of
 #+BEGIN_QUOTE
 (c) v. Use the ~hist()~ function to produce some histograms with
 differing numbers of bins for a few of the quantitative variables. You
-may ﬁnd the command ~par(mfrow=c(2,2))~ useful: it will divide the
+may find the command ~par(mfrow=c(2,2))~ useful: it will divide the
 print window into four regions so that four plots can be made
 simultaneously. Modifying the arguments to this function will divide
 the screen in other ways.
@@ -589,10 +588,9 @@ $ year         <dbl> 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70...
 $ origin       <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, ...
 $ name         <chr> "chevrolet chevelle malibu", "buick skylark 320", "ply...
 #+end_example
-
+*** (a)
 #+BEGIN_QUOTE
-(a) Which of the predictors are quantitative, and which are
-qualitative?
+Which of the predictors are quantitative, and which are qualitative?
 #+END_QUOTE
 
 ~name~ is qualitative. Not sure what ~origin~ represents so let's take
@@ -609,10 +607,10 @@ a look:
  
 Looks like some kind of category, so say it's qualitative. The other
 variables are all quantitative.
-
+*** (b)
 #+BEGIN_QUOTE
-(b) What is the range of each quantitative predictor? You can answer
-this using the ~range()~ function.
+What is the range of each quantitative predictor? You can answer this
+using the ~range()~ function.
 #+END_QUOTE
 
 #+BEGIN_SRC R :results output :exports both
@@ -634,9 +632,9 @@ this using the ~range()~ function.
   <dbl>     <dbl>        <dbl>      <dbl>  <dbl>        <dbl> <dbl>
 1  46.6         8          455        230   5140         24.8    82
 #+end_example
-
+*** (c)
 #+BEGIN_QUOTE
-(c) What is the mean and standard deviation of each quantitative
+What is the mean and standard deviation of each quantitative
 predictor?
 #+END_QUOTE
 
@@ -659,11 +657,11 @@ predictor?
   <dbl>     <dbl>        <dbl>      <dbl>  <dbl>        <dbl> <dbl>
 1  7.81      1.71         105.       38.5   849.         2.76  3.68
 #+end_example
-
+*** (d)
 #+BEGIN_QUOTE
-(d) Now remove the 10th through 85th observations. What is the
-range, mean, and standard deviation of each predictor in the
-subset of the data that remains?
+Now remove the 10th through 85th observations. What is the range,
+mean, and standard deviation of each predictor in the subset of the
+data that remains?
 #+END_QUOTE
 
 #+BEGIN_SRC R :results output :exports both
@@ -697,12 +695,12 @@ subset of the data that remains?
   <dbl>     <dbl>        <dbl>      <dbl>  <dbl>        <dbl> <dbl>
 1  7.87      1.65         99.7       35.7   811.         2.69  3.11
 #+end_example
-
+*** (e)
 #+BEGIN_QUOTE
-(e) Using the full data set, investigate the predictors graphically,
-using scatterplots or other tools of your choice. Create some plots
-highlighting the relationships among the predictors. Comment
-on your ﬁndings.
+Using the full data set, investigate the predictors graphically, using
+scatterplots or other tools of your choice. Create some plots
+highlighting the relationships among the predictors. Comment on your
+findings.
 #+END_QUOTE
 
 #+BEGIN_SRC R :exports both :results graphics  :file img/ch02q09e.png :width 800 :height 800
@@ -714,12 +712,11 @@ on your ﬁndings.
 
 A number of relationships can be seen there, such as horsepower vs
 weight or displacement.
-
+*** (f)
 #+BEGIN_QUOTE
-(f) Suppose that we wish to predict gas mileage (~mpg~) on the basis
-of the other variables. Do your plots suggest that any of the
-other variables might be useful in predicting ~mpg~? Justify your
-answer.
+Suppose that we wish to predict gas mileage (~mpg~) on the basis of
+the other variables. Do your plots suggest that any of the other
+variables might be useful in predicting ~mpg~? Justify your answer.
 #+END_QUOTE
 
 There is a non-linear relationship between mpg and horsepower, weight
@@ -729,10 +726,10 @@ with acceleration.
 #+BEGIN_QUOTE
 This exercise involves the ~Boston~ housing data set.
 #+END_QUOTE
-
+*** (a)
 #+BEGIN_QUOTE
-(a) To begin, load in the ~Boston~ data set. The Boston data set is
-part of the MASS library in R .
+To begin, load in the ~Boston~ data set. The Boston data set is part
+of the MASS library in R .
 
 ~> library(MASS)~
 
@@ -784,10 +781,10 @@ $ medv    <dbl> 24.0, 21.6, 34.7, 33.4, 36.2, 28.7, 22.9, 27.1, 16.5, 18.9,...
 of Boston. Each row represents a town or tract and has variables like
 crime per capita, proportion of non-retail business acres per town,
 tax rate etc.
-
+*** (b)
 #+BEGIN_QUOTE
-(b) Make some pairwise scatterplots of the predictors (columns) in
-this data set. Describe your ﬁndings.
+Make some pairwise scatterplots of the predictors (columns) in this
+data set. Describe your findings.
 #+END_QUOTE
 
 #+BEGIN_SRC R :exports both :results graphics  :file img/ch02q10b.png :width 800 :height 800
@@ -797,17 +794,17 @@ this data set. Describe your ﬁndings.
 #+RESULTS:
 [[file:img/ch02q10b.png]]
 
-There are a number of relationships that look interesting, includinh
+There are a number of relationships that look interesting, including
 
 - ~nox~ (nitrogen oxide concentration) vs ~dis~ (distance to employment)
 - ~rm~ (rooms per dwelling) vs ~medv~ (median value of dwellings)
 
 Looking at distributions (the histograms) is interesting, with
 several variables (~rad~, ~tax~, ~indus~) having two peaks.
-
+*** (c)
 #+BEGIN_QUOTE
-(c) Are any of the predictors associated with per capita crime rate?
-If so, explain the relationship.
+Are any of the predictors associated with per capita crime rate? If
+so, explain the relationship.
 #+END_QUOTE
 
 Looking at correlations:
@@ -828,11 +825,11 @@ We can see the strongest correlations for ~rad~, ~tax~ and ~lstat~.
   and a greater range. At other points there is not much association.
 - ~tax~ is similar to ~rad~.
 - Crime goes up with increased ~lstat~.
-
+*** (d)
 #+BEGIN_QUOTE
-(d) Do any of the suburbs of Boston appear to have particularly high
-crime rates? Tax rates? Pupil-teacher ratios? Comment on the range of
-each predictor.
+Do any of the suburbs of Boston appear to have particularly high crime
+rates? Tax rates? Pupil-teacher ratios? Comment on the range of each
+predictor.
 #+END_QUOTE
 
 #+BEGIN_SRC R :results output :exports both
@@ -855,9 +852,9 @@ With this and the histograms we can see
 - Crime is generally low, but there are some very large outliers
 - Tax rates have two peaks
 - Pupil/teacher ratio is negatively skewed
-
+*** (e)
 #+BEGIN_QUOTE
-(e) How many of the suburbs in this data set bound the Charles river?
+How many of the suburbs in this data set bound the Charles river?
 #+END_QUOTE
 
 The ~chas~ variable shows this, if the value is 1 it is bound by the river.
@@ -870,10 +867,10 @@ The ~chas~ variable shows this, if the value is 1 it is bound by the river.
 : 
 :   0   1 
 : 471  35
-
+*** (f)
 #+BEGIN_QUOTE
-(f) What is the median pupil-teacher ratio among the towns in this
-data set?
+What is the median pupil-teacher ratio among the towns in this data
+set?
 #+END_QUOTE
 
 #+BEGIN_SRC R :results output :exports both
@@ -882,12 +879,12 @@ data set?
 
 #+RESULTS:
 : [1] 19.05
-
+*** (g)
 #+BEGIN_QUOTE
-(g) Which suburb of Boston has lowest median value of owner-occupied
+Which suburb of Boston has lowest median value of owner-occupied
 homes? What are the values of the other predictors for that suburb,
 and how do those values compare to the overall ranges for those
-predictors? Comment on your ﬁndings.
+predictors? Comment on your findings.
 #+END_QUOTE
 
 #+BEGIN_SRC R :results output :exports both
@@ -941,9 +938,9 @@ predictors? Comment on your ﬁndings.
 - Nitrogen oxide rates are all above the mean
 - Age is well above the mean
 - Tax and lower status is high
-
+*** (h)
 #+BEGIN_QUOTE
-(h) In this data set, how many of the suburbs average more than seven
+In this data set, how many of the suburbs average more than seven
 rooms per dwelling? More than eight rooms per dwelling? Comment on the
 suburbs that average more than eight rooms per dwelling.
 #+END_QUOTE
