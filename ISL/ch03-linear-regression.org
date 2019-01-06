@@ -1,0 +1,2551 @@
+#+TITLE: Introduction to Statistical Learning, Chapter 3: Linear Regression
+#+AUTHOR: Rupert Lane
+#+EMAIL: rupert@rupert-lane.org
+#+PROPERTY: header-args:R :session *R*
+#+STARTUP: inlineimages
+#+STARTUP: latexpreview
+
+* Conceptual
+** Question 1
+#+BEGIN_QUOTE
+Describe the null hypotheses to which the p-values given in Table 3.4
+correspond. Explain what conclusions you can draw based on these
+p-values. Your explanation should be phrased in terms of ~sales~,
+~TV~, ~radio~, and ~newspaper~, rather than in terms of the
+coefficients of the linear model.
+#+END_QUOTE
+
+There are three null hypotheses, one for each of three predictor
+variables. For example, for ~TV~, the hypothesis states that in the
+presence of the other predictors, ~TV~ does not have any effect on the
+response variables ~sales~. There are similar null hypotheses for the
+other ones.
+
+Based on the p-values, we can reject the null hypothesis for that ~TV~
+and ~radio~ do not contribute to ~sales~ with a certainty of more than
+95%. For ~newspaper~, the p-value shows us that we cannot reject the
+null hypothesis.
+** Question 2
+#+BEGIN_QUOTE
+Carefully explain the differences between the KNN classifier and KNN
+regression methods.
+#+END_QUOTE
+
+The classifier is used to predict a categorical response, based on the
+most common response for a point's nearest neighbours. The regression
+method predicts a quantitative response by taking the average of its
+nearest neighbours.
+** Question 3
+#+BEGIN_QUOTE
+Suppose we have a data set with five predictors, /X₁/ = GPA, /X₂/ =
+IQ, /X₃/ = Gender (1 for Female and 0 for Male), /X₄/ = Interaction
+between GPA and IQ, and /X₅/ = Interaction between GPA and Gender. The
+response is starting salary after graduation (in thousands of
+dollars). Suppose we use least squares to fit the model, and get /β̂₀/ =
+50, /β̂₁/ = 20, /β̂₂/ = 0.07, /β̂₃/ = 35, /β̂₄/ = 0.01, /β̂₅/ = −10. 
+#+END_QUOTE
+
+So /Salary = 50 + 20.GPA + 0.07.IQ + 35.Gender + 0.01.GPA.IQ - 10.GPA.Gender/
+*** (a)
+#+BEGIN_QUOTE
+Which answer is correct, and why?
+i. For a fixed value of IQ and GPA, males earn more on average than
+females.
+
+ii. For a fixed value of IQ and GPA, females earn more on average than
+males.
+
+iii. For a fixed value of IQ and GPA, males earn more on average than
+females provided that the GPA is high enough.
+
+iv. For a fixed value of IQ and GPA, females earn more on average than
+males provided that the GPA is high enough.
+#+END_QUOTE
+
+iii is correct. If GPA is less than 3.5, the terms /35.Gender -
+10.GPA.Gender/ will mean that females earn more. Above 3.5, males earn
+more. 
+*** (b)
+#+BEGIN_QUOTE
+Predict the salary of a female with IQ of 110 and a GPA of 4.0.
+#+END_QUOTE
+
+Y = 50 + 20*4 + 0.07*110 + 35*1 + 0.01*4*110 - 10*4*1
+
+So Y = 137.1, giving a starting salary of $137,100.
+*** (c)
+#+BEGIN_QUOTE
+True or false: Since the coefficient for the GPA/IQ interaction
+term is very small, there is very little evidence of an interaction
+effect. Justify your answer.
+#+END_QUOTE
+
+False: the coefficient being small may not matter if what it is being
+multiplied is large. The way to tell if this is significant or not is
+to do a hypothesis test and look at the p-value.
+** Question 4
+#+BEGIN_QUOTE
+I collect a set of data (n = 100 observations) containing a single
+predictor and a quantitative response. I then fit a linear regression
+model to the data, as well as a separate cubic regression, i.e. /Y =
+β̂₀ + β̂₁X + β̂₂X² + β̂₃X³ + ε/.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Suppose that the true relationship between /X/ and /Y/ is linear,
+i.e. /Y = β̂₀ + β̂₁X + ε/. Consider the training residual sum of squares
+(RSS) for the linear regression, and also the training RSS for the
+cubic regression. Would we expect one to be lower than the other,
+would we expect them to be the same, or is there not enough
+information to tell? Justify your answer.
+#+END_QUOTE
+
+I'm assuming the coefficients for the linear and cubic regressions can
+be different. If so, the cubic regression RSS will be better (lower)
+as it is more flexible and so can fit the model better.
+*** (b)
+#+BEGIN_QUOTE
+Answer (a) using test rather than training RSS.
+#+END_QUOTE
+
+The linear regression will be better, as the high variance of the
+cubic model will make it perform worse with the new data set.
+*** (c)
+#+BEGIN_QUOTE
+Suppose that the true relationship between /X/ and /Y/ is not linear,
+but we don’t know how far it is from linear. Consider the training RSS
+for the linear regression, and also the training RSS for the cubic
+regression. Would we expect one to be lower than the other, would we
+expect them to be the same, or is there not enough information to
+tell? Justify your answer.
+#+END_QUOTE
+
+Even if we don't know the relationship, the lower bias of the cubic
+regression will make it perform better.
+*** (d)
+#+BEGIN_QUOTE
+(d) Answer (c) using test rather than training RSS.
+#+END_QUOTE
+
+Not enough information, as we don't know how close the true
+relationship is to either linear or cubic.
+** Question 5
+#+BEGIN_QUOTE
+Consider the fitted values that result from performing linear
+regression without an intercept. In this setting, the /i/th fitted
+value takes the form:
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q05_1.png
+\[
+\hat{y_i} = x_i\hat{\beta}
+\]
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q05_1.png]]
+
+where
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q05_2.png
+\[
+\hat{\beta} = (\sum_{i=1}^{n} x_i y_i) / (\sum_{i'=1}^{n} x_{i'}^{2})
+\]
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q05_2.png]]
+
+Show that we can write
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q05_3.png
+\[
+\hat{y_i} = \sum_{i'=1}^{n} a_{i'}y_{i'}
+\]
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q05_3.png]]
+
+What is /aᵢ'/?
+#+END_QUOTE
+
+By substitution
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q05_4.png
+\[
+a_{i'} = \frac{x_{i'}x_i}{\sum_{i'=1}^{n} x_{i'}^{2}}
+\]
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q05_4.png]]
+** Question 6
+#+BEGIN_QUOTE
+Using (3.4), argue that in the case of simple linear regression, the
+least squares line always passes through the point (/x̄/, /ȳ/).
+#+END_QUOTE
+
+From 3.4:
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q06_1.png
+\[
+\hat{y} = \hat{\beta_0} + \hat{\beta_1}x = \bar{y} - \hat{\beta_1}\bar{x} + \hat{\beta_1}x
+\]
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q06_1.png]]
+
+so at /x=x̄/, /ŷ = ȳ/ 
+** Question 7
+Skipped.
+
+* Applied
+#+BEGIN_SRC R :exports code :results none
+  library(tidyverse)
+  library(ggplot2)
+  library(ISLR)
+  library(GGally)
+
+  options(crayon.enabled = FALSE)
+#+END_SRC
+** Question 8
+#+BEGIN_QUOTE
+This question involves the use of simple linear regression on the
+~Auto~ data set.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports code :results none
+  auto <- as_tibble(Auto)
+#+END_SRC 
+*** (a)
+#+BEGIN_QUOTE
+Use the ~lm()~ function to perform a simple linear regression with
+~mpg~ as the response and ~horsepower~ as the predictor. Use the
+~summary()~ function to print the results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  model <- lm(mpg ~ horsepower, data=auto)
+  summary(model)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = mpg ~ horsepower, data = auto)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-13.5710  -3.2592  -0.3435   2.7630  16.9240 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 39.935861   0.717499   55.66   <2e-16 ***
+horsepower  -0.157845   0.006446  -24.49   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 4.906 on 390 degrees of freedom
+Multiple R-squared:  0.6059,	Adjusted R-squared:  0.6049 
+F-statistic: 599.7 on 1 and 390 DF,  p-value: < 2.2e-16
+#+end_example
+
+#+BEGIN_QUOTE
+Comment on the output. For example:
+
+i. Is there a relationship between the predictor and the response?
+
+ii. How strong is the relationship between the predictor and the
+response?
+
+iii. Is the relationship between the predictor and the response
+positive or negative?
+
+iv. What is the predicted ~mpg~ associated with a ~horsepower~ of 98?
+What are the associated 95% confidence and prediction intervals?
+#+END_QUOTE
+
+The model shows there is a negative relationship between ~horsepower~
+and ~mpg~. The low p-value shows we can reject the null hypothesis
+that they are unrelated. The R-squared value of 0.6059 shows there is
+a fairly strong relationship.
+
+To get the prediction and intervals:
+
+#+BEGIN_SRC R :results output :exports both
+  autoNewData <- data_frame(horsepower = 98)
+  predict(model, autoNewData, interval="confidence")
+  predict(model, autoNewData, interval="prediction")
+#+END_SRC 
+
+#+RESULTS:
+: 
+:        fit      lwr      upr
+: 1 24.46708 23.97308 24.96108
+: 
+:        fit     lwr      upr
+: 1 24.46708 14.8094 34.12476
+
+This shows at horsepower = 98 the model predicts a mpg value of
+24.467. The confidence and prediction intervals are centred around the
+prediction, but the prediction interval is wider as it indicates the
+95% confidence of predicting just that point.
+*** (b)
+#+BEGIN_QUOTE
+(b) Plot the response and the predictor. Use the ~abline()~ function
+to display the least squares regression line.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q08b.png
+  ggplot(auto, aes(x=horsepower, y=mpg)) + 
+      geom_point() +
+      stat_smooth(method = "lm", col = "red") +
+      labs(title = "mpg predicted from horsepower using a simple linear model")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q08b.png]]
+
+*** (c)
+#+BEGIN_QUOTE
+Use the plot() function to produce diagnostic plots of the least
+squares regression fit. Comment on any problems you see with the fit.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q08c.png :width 600
+  par(mfrow = c(2, 2))
+  plot(model)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q08c.png]]
+
+The residuals plot shows a non-linear effect, especially at higher
+values of horsepower. This indicates that a different model may be
+suitable.
+** Question 9
+#+BEGIN_QUOTE
+This question involves the use of multiple linear regression on the
+~Auto~ data set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Produce a scatterplot matrix which includes all of the variables in
+the data set.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch03q09a.png :width 800 :height 800
+  autoExName <- auto %>% select(-name) 
+  autoExName %>% ggpairs(progress=FALSE)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q09a.png]]
+*** (b)
+#+BEGIN_QUOTE
+Compute the matrix of correlations between the variables using the
+function ~cor()~. You will need to exclude the ~name~ variable, which
+is qualitative.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  autoExName %>% cor()
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+                    mpg  cylinders displacement horsepower     weight
+mpg           1.0000000 -0.7776175   -0.8051269 -0.7784268 -0.8322442
+cylinders    -0.7776175  1.0000000    0.9508233  0.8429834  0.8975273
+displacement -0.8051269  0.9508233    1.0000000  0.8972570  0.9329944
+horsepower   -0.7784268  0.8429834    0.8972570  1.0000000  0.8645377
+weight       -0.8322442  0.8975273    0.9329944  0.8645377  1.0000000
+acceleration  0.4233285 -0.5046834   -0.5438005 -0.6891955 -0.4168392
+year          0.5805410 -0.3456474   -0.3698552 -0.4163615 -0.3091199
+origin        0.5652088 -0.5689316   -0.6145351 -0.4551715 -0.5850054
+             acceleration       year     origin
+mpg             0.4233285  0.5805410  0.5652088
+cylinders      -0.5046834 -0.3456474 -0.5689316
+displacement   -0.5438005 -0.3698552 -0.6145351
+horsepower     -0.6891955 -0.4163615 -0.4551715
+weight         -0.4168392 -0.3091199 -0.5850054
+acceleration    1.0000000  0.2903161  0.2127458
+year            0.2903161  1.0000000  0.1815277
+origin          0.2127458  0.1815277  1.0000000
+#+end_example
+*** (c)
+#+BEGIN_QUOTE
+Use the ~lm()~ function to perform a multiple linear regression with
+~mpg~ as the response and all other variables except ~name~ as the
+predictors. Use the ~summary()~ function to print the results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  modelMulti <- lm(mpg ~ cylinders + displacement + horsepower + weight +
+                       acceleration + year + origin,
+                   data=auto)
+  summary(modelMulti)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = mpg ~ cylinders + displacement + horsepower + weight + 
+    acceleration + year + origin, data = auto)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-9.5903 -2.1565 -0.1169  1.8690 13.0604 
+
+Coefficients:
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  -17.218435   4.644294  -3.707  0.00024 ***
+cylinders     -0.493376   0.323282  -1.526  0.12780    
+displacement   0.019896   0.007515   2.647  0.00844 ** 
+horsepower    -0.016951   0.013787  -1.230  0.21963    
+weight        -0.006474   0.000652  -9.929  < 2e-16 ***
+acceleration   0.080576   0.098845   0.815  0.41548    
+year           0.750773   0.050973  14.729  < 2e-16 ***
+origin         1.426141   0.278136   5.127 4.67e-07 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 3.328 on 384 degrees of freedom
+Multiple R-squared:  0.8215,	Adjusted R-squared:  0.8182 
+F-statistic: 252.4 on 7 and 384 DF,  p-value: < 2.2e-16
+#+end_example
+
+#+BEGIN_QUOTE
+Comment on the output. For instance:
+i. Is there a relationship between the predictors and the response?
+ii. Which predictors appear to have a statistically significant
+relationship to the response?
+iii. What does the coefficient for the year variable suggest?
+#+END_QUOTE
+
+Based on the R-squared value, there is a relationship between the
+predictors and the model. This is better than the previous model,
+R-squared = 0.8215 compared to 0.6059. The F-statistic and associated
+p-value shows that this model produces statistically significant
+results.
+
+The ~displacement~, ~weight~, ~year~ and ~origin~ variables have a
+statistically significant relationship, according to the p-values.
+
+The coefficient of the ~year~ variable in the model implies that cars
+manufactured later have a better ~mpg~ rating. Assuming all other
+variables are held constant, a car created one year later will have an
+increase of ~mpg~ of 0.751.
+*** (d)
+#+BEGIN_QUOTE
+Use the ~plot()~ function to produce diagnostic plots of the linear
+regression fit. Comment on any problems you see with the fit. Do the
+residual plots suggest any unusually large outliers? Does the leverage
+plot identify any observations with unusually high leverage?
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q09d.png :width 600
+  par(mfrow = c(2, 2))
+  plot(modelMulti)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q09d.png]]
+
+There are no unusually high outliers, but the residuals plot does show
+a skewed pattern and an increase in variance on the right. Point 14
+has high leverage, but is below Cook's distance so is not critical. 
+*** (e)
+#+BEGIN_QUOTE
+(e) Use the ~*~ and ~:~ symbols to fit linear regression models with
+interaction effects. Do any interactions appear to be statistically
+significant?
+#+END_QUOTE
+
+Looking at the correlations matrix and the significant variables from
+the previous model, we see ~displacement~ and ~weight~ are highly
+correlated. Trying this in the model, along with year and origin:
+
+#+BEGIN_SRC R :results output :exports both
+  modelInteraction <- lm(mpg ~ displacement*weight + year + origin,
+                   data=auto)
+  summary(modelInteraction)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = mpg ~ displacement * weight + year + origin, data = auto)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-10.6119  -1.7290  -0.0115   1.5609  12.5584 
+
+Coefficients:
+                      Estimate Std. Error t value Pr(>|t|)    
+(Intercept)         -8.007e+00  3.798e+00  -2.108   0.0357 *  
+displacement        -7.148e-02  9.176e-03  -7.790 6.27e-14 ***
+weight              -1.054e-02  6.530e-04 -16.146  < 2e-16 ***
+year                 8.194e-01  4.518e-02  18.136  < 2e-16 ***
+origin               3.567e-01  2.574e-01   1.386   0.1666    
+displacement:weight  2.104e-05  2.214e-06   9.506  < 2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 3.016 on 386 degrees of freedom
+Multiple R-squared:  0.8526,	Adjusted R-squared:  0.8507 
+F-statistic: 446.5 on 5 and 386 DF,  p-value: < 2.2e-16
+#+end_example
+
+We see an improved R-squared value and a p-value for
+~displacement*weight~ (ie the product of ~displacement~ and ~weight~
+as well as the individual terms). ~origin~ is not statistically
+significant in this model but ~year~ is.
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q09e.png :width 600
+  par(mfrow = c(2, 2))
+  plot(modelInteraction)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q09e.png]]
+
+The residual plot shows a better mean line, though still higher
+variance on the right side. 
+
+*** (f)
+#+BEGIN_QUOTE
+Try a few different transformations of the variables, such as log(X),
+√X, X². Comment on your findings.
+#+END_QUOTE
+
+Trying different transforms on a single variable:
+
+#+BEGIN_SRC R :results output :exports both
+  summary(lm(mpg ~ weight, data=auto))
+  summary(lm(mpg ~ I(log(weight)), data=auto))
+  summary(lm(mpg ~ I(sqrt(weight)), data=auto))
+  summary(lm(mpg ~ I(weight^2), data=auto))
+  summary(lm(log(mpg) ~ weight, data=auto))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = mpg ~ weight, data = auto)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-11.9736  -2.7556  -0.3358   2.1379  16.5194 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 46.216524   0.798673   57.87   <2e-16 ***
+weight      -0.007647   0.000258  -29.64   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 4.333 on 390 degrees of freedom
+Multiple R-squared:  0.6926,	Adjusted R-squared:  0.6918 
+F-statistic: 878.8 on 1 and 390 DF,  p-value: < 2.2e-16
+
+Call:
+lm(formula = mpg ~ I(log(weight)), data = auto)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-12.4315  -2.6752  -0.2888   1.9429  16.0136 
+
+Coefficients:
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)    209.9433     6.0002   34.99   <2e-16 ***
+I(log(weight)) -23.4317     0.7534  -31.10   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 4.189 on 390 degrees of freedom
+Multiple R-squared:  0.7127,	Adjusted R-squared:  0.7119 
+F-statistic: 967.3 on 1 and 390 DF,  p-value: < 2.2e-16
+
+Call:
+lm(formula = mpg ~ I(sqrt(weight)), data = auto)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-12.2402  -2.9005  -0.3708   2.0791  16.2296 
+
+Coefficients:
+                Estimate Std. Error t value Pr(>|t|)    
+(Intercept)     69.67218    1.52649   45.64   <2e-16 ***
+I(sqrt(weight)) -0.85560    0.02797  -30.59   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 4.239 on 390 degrees of freedom
+Multiple R-squared:  0.7058,	Adjusted R-squared:  0.705 
+F-statistic: 935.4 on 1 and 390 DF,  p-value: < 2.2e-16
+
+Call:
+lm(formula = mpg ~ I(weight^2), data = auto)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-11.2813  -3.1744  -0.4708   2.2708  17.2506 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  3.447e+01  4.708e-01   73.22   <2e-16 ***
+I(weight^2) -1.150e-06  4.266e-08  -26.96   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 4.619 on 390 degrees of freedom
+Multiple R-squared:  0.6507,	Adjusted R-squared:  0.6498 
+F-statistic: 726.6 on 1 and 390 DF,  p-value: < 2.2e-16
+
+Call:
+lm(formula = log(mpg) ~ weight, data = auto)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.50716 -0.09966 -0.00621  0.09973  0.55239 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  4.142e+00  3.031e-02  136.66   <2e-16 ***
+weight      -3.505e-04  9.790e-06  -35.81   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.1644 on 390 degrees of freedom
+Multiple R-squared:  0.7668,	Adjusted R-squared:  0.7662 
+F-statistic:  1282 on 1 and 390 DF,  p-value: < 2.2e-16
+#+end_example
+
+So ~weight~ as a predictor of ~log(mpg)~ looks interesting here.
+** Question 10
+#+BEGIN_QUOTE
+This question should be answered using the ~Carseats~ data set.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  carseats <- as_tibble(Carseats)
+  glimpse(carseats)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Observations: 400
+Variables: 11
+$ Sales       <dbl> 9.50, 11.22, 10.06, 7.40, 4.15, 10.81, 6.63, 11.85, 6.5...
+$ CompPrice   <dbl> 138, 111, 113, 117, 141, 124, 115, 136, 132, 132, 121, ...
+$ Income      <dbl> 73, 48, 35, 100, 64, 113, 105, 81, 110, 113, 78, 94, 35...
+$ Advertising <dbl> 11, 16, 10, 4, 3, 13, 0, 15, 0, 0, 9, 4, 2, 11, 11, 5, ...
+$ Population  <dbl> 276, 260, 269, 466, 340, 501, 45, 425, 108, 131, 150, 5...
+$ Price       <dbl> 120, 83, 80, 97, 128, 72, 108, 120, 124, 124, 100, 94, ...
+$ ShelveLoc   <fct> Bad, Good, Medium, Medium, Bad, Bad, Medium, Good, Medi...
+$ Age         <dbl> 42, 65, 59, 55, 38, 78, 71, 67, 76, 76, 26, 50, 62, 53,...
+$ Education   <dbl> 17, 10, 12, 14, 13, 16, 15, 10, 10, 17, 10, 13, 18, 18,...
+$ Urban       <fct> Yes, Yes, Yes, Yes, Yes, No, Yes, Yes, No, No, No, Yes,...
+$ US          <fct> Yes, Yes, Yes, Yes, No, Yes, No, Yes, No, Yes, Yes, Yes...
+#+end_example
+*** (a)
+#+BEGIN_QUOTE
+Fit a multiple regression model to predict ~Sales~ using ~Price~,
+~Urban~, and ~US~.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  model1 <- lm(Sales ~ Price + Urban + US, data=carseats)
+  summary(model1)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Sales ~ Price + Urban + US, data = carseats)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-6.9206 -1.6220 -0.0564  1.5786  7.0581 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 13.043469   0.651012  20.036  < 2e-16 ***
+Price       -0.054459   0.005242 -10.389  < 2e-16 ***
+UrbanYes    -0.021916   0.271650  -0.081    0.936    
+USYes        1.200573   0.259042   4.635 4.86e-06 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.472 on 396 degrees of freedom
+Multiple R-squared:  0.2393,	Adjusted R-squared:  0.2335 
+F-statistic: 41.52 on 3 and 396 DF,  p-value: < 2.2e-16
+#+end_example
+*** (b)
+#+BEGIN_QUOTE
+Provide an interpretation of each coefficient in the model. Be
+careful—some of the variables in the model are qualitative!
+#+END_QUOTE
+
+From the documentation available via ~?Carseats~
+
+- ~Sales~ Unit sales (in thousands) at each location
+- ~Price~ Price company charges for car seats at each site
+- ~Urban~ A factor with levels ‘No’ and ‘Yes’ to indicate whether the
+  store is in an urban or rural location
+- ~US~ A factor with levels ‘No’ and ‘Yes’ to indicate whether the
+  store is in the US or not
+
+~Urban~ and ~US~ are thus qualitative coefficients, with value of 1 if
+the variable is Yes, otherwise 0.
+
+There is a negative relationship between ~Price~ and ~Sales~ and a
+positive relationship between ~US~ being Yes and Sales. The model
+shows that the ~Urban~ variable is not statistically significant.
+
+*** (c)
+#+BEGIN_QUOTE
+Write out the model in equation form, being careful to handle the
+qualitative variables properly.
+#+END_QUOTE
+
+~Sales~ = 13.043469 - 0.054459 * ~Price~ - 0.021916 * ~Urban~ + 1.200573 * ~US~
+
+where ~Urban~ and ~US~ are either 1 or 0 as defined in (b).
+*** (d)
+#+BEGIN_QUOTE
+(d) For which of the predictors can you reject the null hypothesis
+H₀ : β = 0?
+#+END_QUOTE
+
+The intercept, ~Price~ and ~US~, as the p-values are well below 0.05. 
+*** (e)
+#+BEGIN_QUOTE
+On the basis of your response to the previous question, fit a smaller
+model that only uses the predictors for which there is evidence of
+association with the outcome.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  model2 <- lm(Sales ~ Price + US, data=carseats)
+  summary(model2)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Sales ~ Price + US, data = carseats)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-6.9269 -1.6286 -0.0574  1.5766  7.0515 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 13.03079    0.63098  20.652  < 2e-16 ***
+Price       -0.05448    0.00523 -10.416  < 2e-16 ***
+USYes        1.19964    0.25846   4.641 4.71e-06 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.469 on 397 degrees of freedom
+Multiple R-squared:  0.2393,	Adjusted R-squared:  0.2354 
+F-statistic: 62.43 on 2 and 397 DF,  p-value: < 2.2e-16
+#+end_example
+*** (f)
+#+BEGIN_QUOTE
+How well do the models in (a) and (e) fit the data?
+#+END_QUOTE
+
+Not very well, with R-squared values for both below 0.25.
+*** (g)
+#+BEGIN_QUOTE
+(g) Using the model from (e), obtain 95% confidence intervals for the
+coefficient(s).
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  confint(model2)
+#+END_SRC 
+
+#+RESULTS:
+:                   2.5 %      97.5 %
+: (Intercept) 11.79032020 14.27126531
+: Price       -0.06475984 -0.04419543
+: USYes        0.69151957  1.70776632
+*** (h)
+#+BEGIN_QUOTE
+(h) Is there evidence of outliers or high leverage observations in the
+model from (e)?
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q10h.png :width 600
+  par(mfrow = c(2, 2))
+  plot(model2)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q10h.png]]
+
+According to the bottom right plot, there are some high leverage
+points but not strong enough to adversely affect the model.
+
+** Question 11
+#+BEGIN_QUOTE
+In this problem we will investigate the t-statistic for the null
+hypothesis /H₀ : β = 0/ in simple linear regression without an
+intercept. To begin, we generate a predictor /x/ and a response /y/ as
+follows.
+
+~> set.seed (1)~
+~> x = rnorm (100)~
+~> y =2* x + rnorm (100)~
+#+END_QUOTE
+
+#+BEGIN_SRC R :results none :exports code
+  set.seed(1)
+  x = rnorm(100)
+  y = 2*x + rnorm (100)
+#+END_SRC 
+
+*** (a)
+#+BEGIN_QUOTE
+Perform a simple linear regression of /y/ onto /x/, without an
+intercept. Report the coefficient estimate /β̂/, the standard error of
+this coefficient estimate, and the t-statistic and p-value associated
+with the null hypothesis /H₀ : β = 0/. Comment on these results. (You
+can perform regression without an intercept using the command
+~lm(y∼x+0)~.)
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  modelY <- lm(y~x+0)
+  summary(modelY)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x + 0)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-1.9154 -0.6472 -0.1771  0.5056  2.3109 
+
+Coefficients:
+  Estimate Std. Error t value Pr(>|t|)    
+x   1.9939     0.1065   18.73   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.9586 on 99 degrees of freedom
+Multiple R-squared:  0.7798,	Adjusted R-squared:  0.7776 
+F-statistic: 350.7 on 1 and 99 DF,  p-value: < 2.2e-16
+#+end_example
+
+The model produces a coefficients of around 2, as expected from the
+way /y/ was generated above. The t-statistic and associated p-value
+show that the null hypothesis can be rejected.
+
+*** (b)
+#+BEGIN_QUOTE
+Now perform a simple linear regression of /x/ onto /y/ without an
+intercept, and report the coefficient estimate, its standard error,
+and the corresponding t-statistic and p-values associated with the
+null hypothesis /H₀ : β = 0/. Comment on these results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  modelX <- lm(x~y+0)
+  summary(modelX)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = x ~ y + 0)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-0.8699 -0.2368  0.1030  0.2858  0.8938 
+
+Coefficients:
+  Estimate Std. Error t value Pr(>|t|)    
+y  0.39111    0.02089   18.73   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.4246 on 99 degrees of freedom
+Multiple R-squared:  0.7798,	Adjusted R-squared:  0.7776 
+F-statistic: 350.7 on 1 and 99 DF,  p-value: < 2.2e-16
+#+end_example
+
+As above, the t-statistic and p-value show we can reject the null hypothesis.
+*** (c)
+#+BEGIN_QUOTE
+What is the relationship between the results obtained in (a) and (b)?
+#+END_QUOTE
+
+(b) is a transform of (a), so we'd expect the t-value to be the same.
+*** (d)
+#+BEGIN_QUOTE
+For the regression of /Y/ onto /X/ without an intercept, the
+t-statistic for /H₀ : β = 0/ takes the form /β̂/SE(β̂)/, where /β̂/ is
+given by (3.38), and where [...]. Show algebraically, and confirm
+numerically in R , that the t-statistic can be written as [...]
+#+END_QUOTE
+
+Numerically, we can see this from the models by dividing the
+coefficient by the standard error:
+
+#+BEGIN_SRC R :results output :exports both
+  ## For modelY
+  1.9939 / 0.1065
+  ## For modelX
+  0.39111 / 0.02089
+#+END_SRC 
+
+#+RESULTS:
+: [1] 18.72207
+: [1] 18.72236
+
+Analytically (I hope this is right): 
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q11d_1.png
+$$t = \hat{\beta}/SE(\hat{\beta})$$
+$$\hat{\beta} = (\sum_{i=1}^{n} x_i y_i) / (\sum_{i'=1}^{n} x_{i'}^{2})$$
+$$t = \frac{(\sum_{i=1}^{n} x_i y_i) / (\sum_{i'=1}^{n} x_{i'}^{2})}{\sqrt{\frac{\sum_{i=1}^{n} (y_i - x_i \hat{\beta})^2}{(n-1) \sum_{i'=1}^{n} x_{i'}^{2}}}}$$
+$$t = \frac{\sum_{i=1}^{n} x_i y_i}{\sum_{i'=1}^{n} x_{i'}^{2}} \times 
+      {\sqrt{\frac{(n-1) \sum_{i'=1}^{n} x_{i'}^{2}}{\sum_{i=1}^{n} (y_i - x_i \hat{\beta})^2}}}$$
+$$t = \frac{(\sum_{i=1}^{n} x_i y_i)\sqrt{n-1}}
+           {\sqrt{\sum_{i'=1}^{n} x_{i'}^{2} \sum_{i=1}^{n}(y_i - x_i \hat{\beta})^2}}$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q11d_1.png]]
+
+Let's work on the final term in the divisor
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q11d_2.png
+$$\sum_{i=1}^{n}(y_i - x_i \hat{\beta})^2 = \sum_{i=1}^{n}z^2$$
+$$z^2 = y_i^2 + (x_i\hat{\beta})^2 - 2y_{i}x_{i}\hat{\beta}$$
+$$z^2 = y_i^2 + \frac{(x_i y_i)^2}{x_{i'}^{2}} - \frac{2(y_ix_i)^2}{x_{i'}^2}$$
+$$z^2 = y_i^2 - \frac{(y_ix_i)^2}{x_{i'}^2}$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q11d_2.png]]
+
+and so substituting and rearranging:
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q11d_3.png
+$$t = \frac{(\sum_{i=1}^{n} x_i y_i)\sqrt{n-1}}
+           {\sqrt{(\sum_{i=1}^{n} x_{i}^{2})(\sum_{i'=1}^{n}y_{i'}^2) - (\sum_{i'=1}^{n}x_{i'}y_{i'})^2}}$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q11d_3.png]]
+
+*** (e)
+#+BEGIN_QUOTE
+Using the results from (d), argue that the t-statistic for the
+regression of /y/ onto /x/ is the same as the t-statistic for the
+regression of /x onto y/.
+#+END_QUOTE
+
+As you can substitute /y/ for /x/ and vice versa, the results will be
+the same.
+
+*** (f)
+#+BEGIN_QUOTE
+In R, show that when regression is performed with an intercept,
+the t-statistic for /H₀ : β₁ = 0/ is the same for the regression of /y/
+onto /x/ as it is for the regression of /x/ onto /y/.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  summary(lm(y~x))
+  summary(lm(x~y))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-1.8768 -0.6138 -0.1395  0.5394  2.3462 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.03769    0.09699  -0.389    0.698    
+x            1.99894    0.10773  18.556   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.9628 on 98 degrees of freedom
+Multiple R-squared:  0.7784,	Adjusted R-squared:  0.7762 
+F-statistic: 344.3 on 1 and 98 DF,  p-value: < 2.2e-16
+
+Call:
+lm(formula = x ~ y)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.90848 -0.28101  0.06274  0.24570  0.85736 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.03880    0.04266    0.91    0.365    
+y            0.38942    0.02099   18.56   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.4249 on 98 degrees of freedom
+Multiple R-squared:  0.7784,	Adjusted R-squared:  0.7762 
+F-statistic: 344.3 on 1 and 98 DF,  p-value: < 2.2e-16
+#+end_example
+
+We can see the t-values are the same.
+** Question 12
+#+BEGIN_QUOTE
+This problem involves simple linear regression without an intercept.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Recall that the coefficient estimate β̂ for the linear regression of
+/Y/ onto /X/ without an intercept is given by (3.38). Under what
+circumstance is the coefficient estimate for the regression of /X/
+onto /Y/ the same as the coefficient estimate for the regression of
+/Y/ onto X/?
+#+END_QUOTE
+
+When the sum of /x²/ is equal to the sum of /y²//
+*** (b) 
+#+BEGIN_QUOTE
+Generate an example in R with /n/ = 100 observations in which the
+coefficient estimate for the regression of /X/ onto /Y/ is different
+from the coefficient estimate for the regression of /Y/ onto /X/.
+#+END_QUOTE
+
+Almost any example when the condition in (a) is not met can be used.
+For example:
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  x = rnorm(100)
+  y = 2*x
+  lm(y~x+0)
+  lm(x~y+0)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x + 0)
+
+Coefficients:
+x  
+2
+
+Call:
+lm(formula = x ~ y + 0)
+
+Coefficients:
+  y  
+0.5
+#+end_example
+
+*** (c) 
+#+BEGIN_QUOTE
+Generate an example in R with /n/ = 100 observations in which the
+coefficient estimate for the regression of /X/ onto /Y/ is the same as
+the coefficient estimate for the regression of /Y/ onto /X/.
+#+END_QUOTE
+
+An example here would be /Y = -X/ as the squares would be the same.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  x = rnorm(100)
+  y = -x
+  lm(y~x+0)
+  lm(x~y+0)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x + 0)
+
+Coefficients:
+ x  
+-1
+
+Call:
+lm(formula = x ~ y + 0)
+
+Coefficients:
+ y  
+-1
+#+end_example
+** Question 13
+#+BEGIN_QUOTE
+In this exercise you will create some simulated data and will fit
+simple linear regression models to it. Make sure to use ~set.seed(1)~
+prior to starting part (a) to ensure consistent results.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Using the ~rnorm()~ function, create a vector, ~x~, containing 100
+observations drawn from a /N/ (0, 1) distribution. This represents a
+feature, /X/.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results none :exports code
+  set.seed(1)
+  x = rnorm(100)
+#+END_SRC 
+
+*** (b)
+#+BEGIN_QUOTE
+Using the ~rnorm()~ function, create a vector, ~eps~, containing 100
+observations drawn from a /N/ (0, 0.25) distribution i.e. a normal
+distribution with mean zero and variance 0.25.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results none :exports code
+  eps = rnorm(100, sd=sqrt(0.25))
+#+END_SRC 
+*** (c)
+#+BEGIN_QUOTE
+Using ~x~ and ~eps~, generate a vector ~y~ according to the model
+
+/Y = -1 + 0.5X + ε/                                        (3.39)
+
+What is the length of the vector /y/ ? What are the values of /β₀/ and
+/β₁/ in this linear model?
+#+END_QUOTE 
+
+#+BEGIN_SRC R :results output :exports both
+  y = -1 + 0.5*x + eps
+  length(y)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 100
+
+The coefficients and -1 and 0.5 respectively.
+*** (d)
+#+BEGIN_QUOTE
+Create a scatterplot displaying the relationship between ~x~ and ~y~ .
+Comment on what you observe.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q13d.png
+  simData <- data_frame(x=x, y=y, eps=eps)
+  ggplot(simData, aes(x=x, y=y)) + 
+      geom_point() +
+      labs(title = "Simulated data scatterplot")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q13d.png]]
+
+The plot shows a linear relationship between /x/ and /y/, with the
+slope, intercept and variance expected from the parameters used to
+generate /y/.
+*** (e)
+#+BEGIN_QUOTE
+Fit a least squares linear model to predict /y/ using /x/. Comment on
+the model obtained. How do [estimated] /β₀/ and /β₁/ compare to /β₀/
+and /β₁/?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  simModel1 <- lm(y~x, data=simData)
+  summary(simModel1)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x, data = simData)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.93842 -0.30688 -0.06975  0.26970  1.17309 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.01885    0.04849 -21.010  < 2e-16 ***
+x            0.49947    0.05386   9.273 4.58e-15 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.4814 on 98 degrees of freedom
+Multiple R-squared:  0.4674,	Adjusted R-squared:  0.4619 
+F-statistic: 85.99 on 1 and 98 DF,  p-value: 4.583e-15
+#+end_example
+
+The modelled coefficients are close to the actual ones. The
+t-statistic and associated p-value shows that we can reject the null
+hypothesis that they are zero. The R-squared value shows the model
+accounts for only around 47% of the variance in the data.
+
+*** (f)
+#+BEGIN_QUOTE
+Display the least squares line on the scatterplot obtained in (d).
+Draw the population regression line on the plot, in a different colour.
+Use the ~legend()~ command to create an appropriate legend.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q13f.png
+  simData <- data_frame(x=x, y=y, eps=eps)
+  ggplot(simData, aes(x=x, y=y)) + 
+      geom_point() +
+      stat_smooth(method = "lm", aes(colour = "linear model")) +
+      scale_colour_manual(name="legend", values=c("red")) + 
+      labs(title = "Simulated data scatterplot and linear model")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q13f.png]]
+
+*** (g)
+#+BEGIN_QUOTE
+Now fit a polynomial regression model that predicts /y/ using /x/ and
+/x²/. Is there evidence that the quadratic term improves the model
+fit? Explain your answer.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  simModel2 <- lm(y~x+I(x^2), data=simData)
+  summary(simModel2)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x + I(x^2), data = simData)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.98252 -0.31270 -0.06441  0.29014  1.13500 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.97164    0.05883 -16.517  < 2e-16 ***
+x            0.50858    0.05399   9.420  2.4e-15 ***
+I(x^2)      -0.05946    0.04238  -1.403    0.164    
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.479 on 97 degrees of freedom
+Multiple R-squared:  0.4779,	Adjusted R-squared:  0.4672 
+F-statistic:  44.4 on 2 and 97 DF,  p-value: 2.038e-14
+#+end_example
+
+The t-statistic and p-value for the /x²/ term is shown as not being
+statistically significant. R-squared has gone up slightly but the
+F-statistic has slightly decreased, so overall I'd say the model is a
+worse fit.
+*** (h)
+#+BEGIN_QUOTE
+Repeat (a)–(f) after modifying the data generation process in such a
+way that there is less noise in the data. The model (3.39) should
+remain the same. You can do this by decreasing the variance of the
+normal distribution used to generate the error term /ε/ in (b).
+Describe your results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q13h.png
+  simLessNoise <- data_frame(x=rnorm(100),
+                             eps=rnorm(100, sd=sqrt(0.125)),
+                             y=-1 + 0.5*x + eps)
+
+  ggplot(simLessNoise, aes(x=x, y=y)) + 
+      geom_point() +
+      stat_smooth(method = "lm", aes(colour = "linear model")) +
+      scale_colour_manual(name="legend", values=c("red")) + 
+      labs(title = "Simulated data scatterplot and linear model")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q13h.png]]
+
+#+BEGIN_SRC R :results output :exports both
+  simLessNoiseModel <- lm(y~x, data=simLessNoise)
+  summary(simLessNoiseModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x, data = simLessNoise)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.86510 -0.26286  0.01232  0.32188  1.09115 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.02657    0.04178  -24.57   <2e-16 ***
+x            0.54889    0.04208   13.04   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.4159 on 98 degrees of freedom
+Multiple R-squared:  0.6345,	Adjusted R-squared:  0.6308 
+F-statistic: 170.2 on 1 and 98 DF,  p-value: < 2.2e-16
+#+end_example
+
+The model has improved, with better t-statistics and associated
+p-values, and increased R-squared.
+*** (i)
+#+BEGIN_QUOTE
+Repeat (a)–(f) after modifying the data generation process in such a
+way that there is more noise in the data. The model (3.39) should
+remain the same. You can do this by increasing the variance of the
+normal distribution used to generate the error term /ε/in (b).
+Describe your results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q13i.png
+  simMoreNoise <- data_frame(x=rnorm(100),
+                             eps=rnorm(100, sd=sqrt(0.5)),
+                             y=-1 + 0.5*x + eps)
+
+  ggplot(simMoreNoise, aes(x=x, y=y)) + 
+      geom_point() +
+      stat_smooth(method = "lm", aes(colour = "linear model")) +
+      scale_colour_manual(name="legend", values=c("red")) + 
+      labs(title = "Simulated data scatterplot and linear model")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q13i.png]]
+
+#+BEGIN_SRC R :results output :exports both
+  simMoreNoiseModel <- lm(y~x, data=simMoreNoise)
+  summary(simMoreNoiseModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x, data = simMoreNoise)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.71568 -0.48042  0.07136  0.48644  1.80133 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.04241    0.07494 -13.911  < 2e-16 ***
+x            0.39986    0.07046   5.675 1.41e-07 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.7434 on 98 degrees of freedom
+Multiple R-squared:  0.2473,	Adjusted R-squared:  0.2396 
+F-statistic:  32.2 on 1 and 98 DF,  p-value: 1.413e-07
+#+end_example
+
+The model is still producing good results based on the t-statistics and
+associated p-values, but R-squared and the F-statistic have got worse
+now there is more noise.
+
+*** (j)
+#+BEGIN_QUOTE
+What are the confidence intervals for /β₀/ and /β₁/ based on the
+original data set, the noisier data set, and the less noisy data set?
+Comment on your results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  confint(simModel1)
+  confint(simLessNoiseModel)
+  confint(simMoreNoiseModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+                 2.5 %     97.5 %
+(Intercept) -1.1150804 -0.9226122
+x            0.3925794  0.6063602
+
+                 2.5 %     97.5 %
+(Intercept) -1.1094788 -0.9436542
+x            0.4653828  0.6323898
+
+                 2.5 %     97.5 %
+(Intercept) -1.1911167 -0.8936992
+x            0.2600248  0.5396927
+#+end_example
+
+For less noisy data, the confidence intervals get smaller, but still
+centres around the true parameters.
+** Question 14
+#+BEGIN_QUOTE
+This problem focuses on the collinearity problem.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Perform the following commands in R :
+
+> set.seed (1)
+> x1 = runif (100)
+> x2 = 0.5*x1 + rnorm(100)/10
+> y = 2+2*x1 + 0.3*x2+rnorm(100)
+
+The last line corresponds to creating a linear model in which ~y~ is a
+function of ~x1~ and ~x2~. Write out the form of the linear model.
+What are the regression coefficients?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  colinData <- data_frame(x1 = runif(100),
+                          x2 = 0.5*x1 + rnorm(100)/10,
+                          y = 2 + 2*x1 + 0.3*x2 + rnorm(100))
+  glimpse(colinData)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Observations: 100
+: Variables: 3
+: $ x1 <dbl> 0.26550866, 0.37212390, 0.57285336, 0.90820779, 0.20168193, 0.89...
+: $ x2 <dbl> 0.172564920, 0.124859310, 0.320538651, 0.341167585, 0.244143336,...
+: $ y  <dbl> 3.0329739, 2.7631458, 2.9237999, 2.9894037, 0.9891466, 2.9157575...
+
+The linear model looks like this:
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q14a_1.png
+$$y = 2 + 2x_1 + 0.3x_2 + \epsilon$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q14a_1.png]]
+
+with coefficients /β₀/ = 2, /β₁/ = 2 and /β₂/ = 0.3
+
+But as /x₂/ is a function of /x₁/ we can also write:
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch03q14a_2.png
+$$y = 2 + 2x_1 + 0.3(0.5x_1) + \epsilon$$
+$$y = 2 + 2.15x_1 + \epsilon$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q14a_2.png]]
+
+*** (b)
+#+BEGIN_QUOTE
+What is the correlation between ~x1~ and ~x2~ ? Create a scatterplot
+displaying the relationship between the variables.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  cor(colinData$x1, colinData$x2)
+#+END_SRC 
+
+#+RESULTS:
+: [1] 0.8351212
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q14b.png
+  ggplot(colinData, aes(x=x1, y=x2)) + 
+      geom_point() +
+      labs(title = "Scatterplot of x₁ vs x₂")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q14b.png]]
+
+*** (c)
+#+BEGIN_QUOTE
+Using this data, fit a least squares regression to predict ~y~ using
+~x1~ and ~x2~ . Describe the results obtained. What are [estimated]
+/β₀/, /β₁/ and /β₂/? How do these relate to the true /β₀/, /β₁/ and
+/β₂/? Can you reject the null hypothesis /H₀: β₁ = 0/? How
+about the null hypothesis /H₀: β₂ = 0/?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  colinDataModelx1x2 <- lm(y~x1+x2, data=colinData)
+  summary(colinDataModelx1x2)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x1 + x2, data = colinData)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-2.8311 -0.7273 -0.0537  0.6338  2.3359 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.1305     0.2319   9.188 7.61e-15 ***
+x1            1.4396     0.7212   1.996   0.0487 *  
+x2            1.0097     1.1337   0.891   0.3754    
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1.056 on 97 degrees of freedom
+Multiple R-squared:  0.2088,	Adjusted R-squared:  0.1925 
+F-statistic:  12.8 on 2 and 97 DF,  p-value: 1.164e-05
+#+end_example
+
+This produces a model where the intercept is close to the actual
+value, and the t-statistic and associated p-value are statistically
+significant. The estimates for the two /x/ components are quite a bit
+away from their actual values, and the t-statistics and associated
+p-values are not statistically significant. Overall R-squared for the
+model is low.
+
+We can reject the null hypothesis /H₀: β₁ = 0/: although the p-value
+is high, it is below 5$. We cannot reject /H₀: β₂ = 0/. 
+
+*** (d)
+#+BEGIN_QUOTE
+Now fit a least squares regression to predict ~y~ using only ~x1~ . Comment
+on your results. Can you reject the null hypothesis /H₀: β₁ = 0/?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  colinDataModelx1 <- lm(y~x1, data=colinData)
+  summary(colinDataModelx1)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x1, data = colinData)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-2.89495 -0.66874 -0.07785  0.59221  2.45560 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.1124     0.2307   9.155 8.27e-15 ***
+x1            1.9759     0.3963   4.986 2.66e-06 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1.055 on 98 degrees of freedom
+Multiple R-squared:  0.2024,	Adjusted R-squared:  0.1942 
+F-statistic: 24.86 on 1 and 98 DF,  p-value: 2.661e-06
+#+end_example
+
+This model shows a much better t-statistic and p-value for ~x1~ so we
+can reject the null hypothesis.
+*** (e)
+#+BEGIN_QUOTE
+Now fit a least squares regression to predict ~y~ using only ~x2~ . Comment
+on your results. Can you reject the null hypothesis /H₀: β₁ = 0/?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  colinDataModelx2 <- lm(y~x2, data=colinData)
+  summary(colinDataModelx2)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x2, data = colinData)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-2.62687 -0.75156 -0.03598  0.72383  2.44890 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.3899     0.1949   12.26  < 2e-16 ***
+x2            2.8996     0.6330    4.58 1.37e-05 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1.072 on 98 degrees of freedom
+Multiple R-squared:  0.1763,	Adjusted R-squared:  0.1679 
+F-statistic: 20.98 on 1 and 98 DF,  p-value: 1.366e-05
+#+end_example
+
+This model also shows a much better t-statistic and p-value for ~x2~ so we
+can reject the null hypothesis. Interestingly the R-squared measure
+has decreased compared to the previous models, perhaps due to variance
+of ~x2~ compared to ~x1~?
+*** (f)
+#+BEGIN_QUOTE
+Do the results obtained in (c)–(e) contradict each other? Explain your
+answer.
+#+END_QUOTE
+
+No, due to the colinear relationship between ~x1~ and ~x2~ it is hard
+to separate their effects in the first model.
+*** (g)
+#+BEGIN_QUOTE
+Now suppose we obtain one additional observation, which was
+unfortunately mismeasured. 
+
+~> x1 = c(x1, 0.1)~
+~> x2 = c(x2, 0.8)~
+~> y = c (y ,6)~
+
+Re-fit the linear models from (c) to (e) using this new data. What
+effect does this new observation have on the each of the models? In
+each model, is this observation an outlier? A high-leverage point?
+Both? Explain your answers.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  colinDataG <- colinData %>% add_row(x1=0.1, x2=0.8, y=6)
+  colinDataModelx1x2G <- lm(y~x1+x2, data=colinDataG)
+  summary(colinDataModelx1x2G)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x1 + x2, data = colinDataG)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-2.73348 -0.69318 -0.05263  0.66385  2.30619 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.2267     0.2314   9.624 7.91e-16 ***
+x1            0.5394     0.5922   0.911  0.36458    
+x2            2.5146     0.8977   2.801  0.00614 ** 
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1.075 on 98 degrees of freedom
+Multiple R-squared:  0.2188,	Adjusted R-squared:  0.2029 
+F-statistic: 13.72 on 2 and 98 DF,  p-value: 5.564e-06
+#+end_example
+
+The effect of this new point is to make ~x2~ statistically significant
+and ~x1~ not.
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q14g_1.png :width 600
+  par(mfrow = c(2, 2))
+  plot(colinDataModelx1x2G)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q14g_1.png]]
+
+Looking at the diagnostic plot, we can see that this new point has
+high leverage and is outside the Cook's distance.
+
+#+BEGIN_SRC R :results output :exports both
+  colinDataModelx1G <- lm(y~x1, data=colinDataG)
+  summary(colinDataModelx1G)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x1, data = colinDataG)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-2.8897 -0.6556 -0.0909  0.5682  3.5665 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.2569     0.2390   9.445 1.78e-15 ***
+x1            1.7657     0.4124   4.282 4.29e-05 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1.111 on 99 degrees of freedom
+Multiple R-squared:  0.1562,	Adjusted R-squared:  0.1477 
+F-statistic: 18.33 on 1 and 99 DF,  p-value: 4.295e-05
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q14g_2.png :width 600
+  par(mfrow = c(2, 2))
+  plot(colinDataModelx1G)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q14g_2.png]]
+
+This model is similar to the previous ~x1~ model but with a lower
+R-squared value. The new point is an outlier and at the boundary of
+Cook's distance.
+
+#+BEGIN_SRC R :results output :exports both
+  colinDataModelx2G <- lm(y~x2, data=colinDataG)
+  summary(colinDataModelx2G)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x2, data = colinDataG)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-2.64729 -0.71021 -0.06899  0.72699  2.38074 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   2.3451     0.1912  12.264  < 2e-16 ***
+x2            3.1190     0.6040   5.164 1.25e-06 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1.074 on 99 degrees of freedom
+Multiple R-squared:  0.2122,	Adjusted R-squared:  0.2042 
+F-statistic: 26.66 on 1 and 99 DF,  p-value: 1.253e-06
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch03q14g_3.png :width 600
+  par(mfrow = c(2, 2))
+  plot(colinDataModelx2G)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q14g_3.png]]
+
+This model is similar to the previous ~x1~ model but with an increased
+R-squared value. The new point is not an outlier nor a high leverage
+point. 
+** Question 15
+#+BEGIN_QUOTE
+This problem involves the Boston data set, which we saw in the lab for
+this chapter. We will now try to predict per capita crime rate using
+the other variables in this data set. In other words, per capita crime
+rate is the response, and the other variables are the predictors.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results none :exports code
+  library(MASS)
+  boston <- as_tibble(Boston)
+#+END_SRC 
+
+*** (a)
+#+BEGIN_QUOTE
+For each predictor, fit a simple linear regression model to predict
+the response. Describe your results. In which of the models is
+there a statistically significant association between the predictor
+and the response? Create some plots to back up your assertions.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  models = lapply(names(boston)[-1], function(x) {
+      fml = as.formula(sprintf("crim ~ %s", x))
+      lm(fml, data = boston)
+  })
+  lapply(models, function(m) { summary(m) })
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[[1]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-4.429 -4.222 -2.620  1.250 84.523 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  4.45369    0.41722  10.675  < 2e-16 ***
+zn          -0.07393    0.01609  -4.594 5.51e-06 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.435 on 504 degrees of freedom
+Multiple R-squared:  0.04019,	Adjusted R-squared:  0.03828 
+F-statistic:  21.1 on 1 and 504 DF,  p-value: 5.506e-06
+
+
+[[2]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-11.972  -2.698  -0.736   0.712  81.813 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -2.06374    0.66723  -3.093  0.00209 ** 
+indus        0.50978    0.05102   9.991  < 2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.866 on 504 degrees of freedom
+Multiple R-squared:  0.1653,	Adjusted R-squared:  0.1637 
+F-statistic: 99.82 on 1 and 504 DF,  p-value: < 2.2e-16
+
+
+[[3]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-3.738 -3.661 -3.435  0.018 85.232 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   3.7444     0.3961   9.453   <2e-16 ***
+chas         -1.8928     1.5061  -1.257    0.209    
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.597 on 504 degrees of freedom
+Multiple R-squared:  0.003124,	Adjusted R-squared:  0.001146 
+F-statistic: 1.579 on 1 and 504 DF,  p-value: 0.2094
+
+
+[[4]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-12.371  -2.738  -0.974   0.559  81.728 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  -13.720      1.699  -8.073 5.08e-15 ***
+nox           31.249      2.999  10.419  < 2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.81 on 504 degrees of freedom
+Multiple R-squared:  0.1772,	Adjusted R-squared:  0.1756 
+F-statistic: 108.6 on 1 and 504 DF,  p-value: < 2.2e-16
+
+
+[[5]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.604 -3.952 -2.654  0.989 87.197 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   20.482      3.365   6.088 2.27e-09 ***
+rm            -2.684      0.532  -5.045 6.35e-07 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.401 on 504 degrees of freedom
+Multiple R-squared:  0.04807,	Adjusted R-squared:  0.04618 
+F-statistic: 25.45 on 1 and 504 DF,  p-value: 6.347e-07
+
+
+[[6]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.789 -4.257 -1.230  1.527 82.849 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -3.77791    0.94398  -4.002 7.22e-05 ***
+age          0.10779    0.01274   8.463 2.85e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.057 on 504 degrees of freedom
+Multiple R-squared:  0.1244,	Adjusted R-squared:  0.1227 
+F-statistic: 71.62 on 1 and 504 DF,  p-value: 2.855e-16
+
+
+[[7]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.708 -4.134 -1.527  1.516 81.674 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   9.4993     0.7304  13.006   <2e-16 ***
+dis          -1.5509     0.1683  -9.213   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.965 on 504 degrees of freedom
+Multiple R-squared:  0.1441,	Adjusted R-squared:  0.1425 
+F-statistic: 84.89 on 1 and 504 DF,  p-value: < 2.2e-16
+
+
+[[8]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-10.164  -1.381  -0.141   0.660  76.433 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -2.28716    0.44348  -5.157 3.61e-07 ***
+rad          0.61791    0.03433  17.998  < 2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 6.718 on 504 degrees of freedom
+Multiple R-squared:  0.3913,	Adjusted R-squared:   0.39 
+F-statistic: 323.9 on 1 and 504 DF,  p-value: < 2.2e-16
+
+
+[[9]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-12.513  -2.738  -0.194   1.065  77.696 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -8.528369   0.815809  -10.45   <2e-16 ***
+tax          0.029742   0.001847   16.10   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 6.997 on 504 degrees of freedom
+Multiple R-squared:  0.3396,	Adjusted R-squared:  0.3383 
+F-statistic: 259.2 on 1 and 504 DF,  p-value: < 2.2e-16
+
+
+[[10]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-7.654 -3.985 -1.912  1.825 83.353 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -17.6469     3.1473  -5.607 3.40e-08 ***
+ptratio       1.1520     0.1694   6.801 2.94e-11 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.24 on 504 degrees of freedom
+Multiple R-squared:  0.08407,	Adjusted R-squared:  0.08225 
+F-statistic: 46.26 on 1 and 504 DF,  p-value: 2.943e-11
+
+
+[[11]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-13.756  -2.299  -2.095  -1.296  86.822 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 16.553529   1.425903  11.609   <2e-16 ***
+black       -0.036280   0.003873  -9.367   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.946 on 504 degrees of freedom
+Multiple R-squared:  0.1483,	Adjusted R-squared:  0.1466 
+F-statistic: 87.74 on 1 and 504 DF,  p-value: < 2.2e-16
+
+
+[[12]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-13.925  -2.822  -0.664   1.079  82.862 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -3.33054    0.69376  -4.801 2.09e-06 ***
+lstat        0.54880    0.04776  11.491  < 2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.664 on 504 degrees of freedom
+Multiple R-squared:  0.2076,	Adjusted R-squared:  0.206 
+F-statistic:   132 on 1 and 504 DF,  p-value: < 2.2e-16
+
+
+[[13]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-9.071 -4.022 -2.343  1.298 80.957 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 11.79654    0.93419   12.63   <2e-16 ***
+medv        -0.36316    0.03839   -9.46   <2e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.934 on 504 degrees of freedom
+Multiple R-squared:  0.1508,	Adjusted R-squared:  0.1491 
+F-statistic: 89.49 on 1 and 504 DF,  p-value: < 2.2e-16
+#+end_example
+
+Summarising:
+
+Statistically insignificant (from t-statistic and p-value):
+
+| predictor |  p-value | R-squared |
+|-----------+----------+-----------|
+| chas      |    0.209 |    0.0031 |
+
+Statistically significant, ordered by highest R-squared:
+
+| predictor |  p-value | R-squared |
+|-----------+----------+-----------|
+| rad       |  < 2e-16 |    0.3913 |
+| tax       |   <2e-16 |    0.3396 |
+| lstat     |  < 2e-16 |    0.2076 |
+| nox       |   <2e-16 |    0.1772 |
+| indus     |   <2e-16 |    0.1653 |
+| medv      |   <2e-16 |    0.1508 |
+| black     |   <2e-16 |    0.1483 |
+| dis       |   <2e-16 |    0.1441 |
+| age       | 2.85e-16 |    0.1244 |
+| ptratio   | 2.94e-11 |    0.0841 |
+| rm        | 6.35e-07 |    0.0480 |
+| zn        | 5.51e-06 |    0.0402 |
+
+Plotting these predictors against ~crim~:
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch03q15a.png :width 800
+boston %>%
+  gather(-crim, -chas, key = "var", value = "value") %>% 
+  ggplot(aes(x = value, y = crim)) +
+    geom_point() +
+    stat_smooth(method = "lm", aes(colour = "red")) +
+    facet_wrap(~ var, scales = "free") +
+    labs(title = "Scatterplots of predictors against crim for Boston data")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q15a.png]]
+
+So none of these individual predictors look especially good on their
+own.
+*** (b)
+#+BEGIN_QUOTE
+Fit a multiple regression model to predict the response using all of
+the predictors. Describe your results. For which predictors can we
+reject the null hypothesis /H₀: βⱼ = 0/?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  multiModel = lm(crim ~ zn + indus + chas + nox + rm + age + dis + rad +
+                      tax + ptratio + black + lstat + medv,
+                  data=boston)
+  summary(multiModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = crim ~ zn + indus + chas + nox + rm + age + dis + 
+    rad + tax + ptratio + black + lstat + medv, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-9.924 -2.120 -0.353  1.019 75.051 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  17.033228   7.234903   2.354 0.018949 *  
+zn            0.044855   0.018734   2.394 0.017025 *  
+indus        -0.063855   0.083407  -0.766 0.444294    
+chas         -0.749134   1.180147  -0.635 0.525867    
+nox         -10.313535   5.275536  -1.955 0.051152 .  
+rm            0.430131   0.612830   0.702 0.483089    
+age           0.001452   0.017925   0.081 0.935488    
+dis          -0.987176   0.281817  -3.503 0.000502 ***
+rad           0.588209   0.088049   6.680 6.46e-11 ***
+tax          -0.003780   0.005156  -0.733 0.463793    
+ptratio      -0.271081   0.186450  -1.454 0.146611    
+black        -0.007538   0.003673  -2.052 0.040702 *  
+lstat         0.126211   0.075725   1.667 0.096208 .  
+medv         -0.198887   0.060516  -3.287 0.001087 ** 
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 6.439 on 492 degrees of freedom
+Multiple R-squared:  0.454,	Adjusted R-squared:  0.4396 
+F-statistic: 31.47 on 13 and 492 DF,  p-value: < 2.2e-16
+#+end_example
+
+If we take the 5% p-value as a threshold, this model rejects the null
+hypothesis for ~zn~, ~dis~, ~rad~, ~medv~ and ~black~.
+*** (c)
+#+BEGIN_QUOTE
+How do your results from (a) compare to your results from (b)? Create
+a plot displaying the univariate regression coefficients from (a) on
+the /x/-axis, and the multiple regression coefficients from (b) on the
+/y/-axis. That is, each predictor is displayed as a single point in
+the plot. Its coefficient in a simple linear regression model is
+shown on the /x/-axis, and its coefficient estimate in the multiple
+linear regression model is shown on the /y/-axis.
+#+END_QUOTE
+
+Let's gather together the coefficients:
+
+#+BEGIN_SRC R :results output :exports both
+  predictorNames <- names(boston)[-1]
+  simpleCoefs = sapply(1:length(predictorNames), function(i) {
+      coef(models[[i]])[predictorNames[i]]
+  })
+  multiCoefs <- sapply(predictorNames, function(p) {
+      coef(multiModel)[p]
+  })
+  comparedCoefs <- data_frame(predictors=predictorNames,
+                              simple=simpleCoefs, multi=multiCoefs)
+  comparedCoefs
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 13 x 3
+   predictors   simple     multi
+   <chr>         <dbl>     <dbl>
+ 1 zn          -0.0739   0.0449 
+ 2 indus        0.510   -0.0639 
+ 3 chas        -1.89    -0.749  
+ 4 nox         31.2    -10.3    
+ 5 rm          -2.68     0.430  
+ 6 age          0.108    0.00145
+ 7 dis         -1.55    -0.987  
+ 8 rad          0.618    0.588  
+ 9 tax          0.0297  -0.00378
+10 ptratio      1.15    -0.271  
+11 black       -0.0363  -0.00754
+12 lstat        0.549    0.126  
+13 medv        -0.363   -0.199
+#+end_example
+
+And display as a plot:
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch03q15c.png
+comparedCoefs %>%
+  ggplot(aes(x = simple, y = multi)) +
+    geom_point() +
+    labs(title = "Scatterplot of simple vs multiple linear regression coefficients")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q15c.png]]
+
+I'm not sure this tells us much really. Many of the predictors have
+similar values but some are quite different, eg ~nox~ at the bottom
+right. But for ~nox~ (and others) we could not reject the null
+hypothesis for this predictor in the multiple regression anyway. 
+
+Also there may be interactions between the different variables that
+lead to different values for the predictors in the multiple regression
+model.
+*** (d)
+#+BEGIN_QUOTE
+Is there evidence of non-linear association between any of the
+predictors and the response? To answer this question, for each
+predictor /X/, fit a model of the form
+
+/Y = β₀ + β₁X + β₂X² + β₃X³ + ε/
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  polyModels <- lapply(names(boston)[-1], function(x) {
+      fml = as.formula(sprintf("crim ~ %s + I(%s^2) + I(%s^3)", x, x, x))
+      lm(fml, data = boston)
+  })
+  lapply(polyModels, function(m) { summary(m) })
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[[1]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-4.821 -4.614 -1.294  0.473 84.130 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  4.846e+00  4.330e-01  11.192  < 2e-16 ***
+zn          -3.322e-01  1.098e-01  -3.025  0.00261 ** 
+I(zn^2)      6.483e-03  3.861e-03   1.679  0.09375 .  
+I(zn^3)     -3.776e-05  3.139e-05  -1.203  0.22954    
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.372 on 502 degrees of freedom
+Multiple R-squared:  0.05824,	Adjusted R-squared:  0.05261 
+F-statistic: 10.35 on 3 and 502 DF,  p-value: 1.281e-06
+
+
+[[2]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-8.278 -2.514  0.054  0.764 79.713 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  3.6625683  1.5739833   2.327   0.0204 *  
+indus       -1.9652129  0.4819901  -4.077 5.30e-05 ***
+I(indus^2)   0.2519373  0.0393221   6.407 3.42e-10 ***
+I(indus^3)  -0.0069760  0.0009567  -7.292 1.20e-12 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.423 on 502 degrees of freedom
+Multiple R-squared:  0.2597,	Adjusted R-squared:  0.2552 
+F-statistic: 58.69 on 3 and 502 DF,  p-value: < 2.2e-16
+
+
+[[3]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-3.738 -3.661 -3.435  0.018 85.232 
+
+Coefficients: (2 not defined because of singularities)
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   3.7444     0.3961   9.453   <2e-16 ***
+chas         -1.8928     1.5061  -1.257    0.209    
+I(chas^2)         NA         NA      NA       NA    
+I(chas^3)         NA         NA      NA       NA    
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.597 on 504 degrees of freedom
+Multiple R-squared:  0.003124,	Adjusted R-squared:  0.001146 
+F-statistic: 1.579 on 1 and 504 DF,  p-value: 0.2094
+
+
+[[4]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-9.110 -2.068 -0.255  0.739 78.302 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   233.09      33.64   6.928 1.31e-11 ***
+nox         -1279.37     170.40  -7.508 2.76e-13 ***
+I(nox^2)     2248.54     279.90   8.033 6.81e-15 ***
+I(nox^3)    -1245.70     149.28  -8.345 6.96e-16 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.234 on 502 degrees of freedom
+Multiple R-squared:  0.297,	Adjusted R-squared:  0.2928 
+F-statistic: 70.69 on 3 and 502 DF,  p-value: < 2.2e-16
+
+
+[[5]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-18.485  -3.468  -2.221  -0.015  87.219 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)  
+(Intercept) 112.6246    64.5172   1.746   0.0815 .
+rm          -39.1501    31.3115  -1.250   0.2118  
+I(rm^2)       4.5509     5.0099   0.908   0.3641  
+I(rm^3)      -0.1745     0.2637  -0.662   0.5086  
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.33 on 502 degrees of freedom
+Multiple R-squared:  0.06779,	Adjusted R-squared:  0.06222 
+F-statistic: 12.17 on 3 and 502 DF,  p-value: 1.067e-07
+
+
+[[6]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-9.762 -2.673 -0.516  0.019 82.842 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)   
+(Intercept) -2.549e+00  2.769e+00  -0.920  0.35780   
+age          2.737e-01  1.864e-01   1.468  0.14266   
+I(age^2)    -7.230e-03  3.637e-03  -1.988  0.04738 * 
+I(age^3)     5.745e-05  2.109e-05   2.724  0.00668 **
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.84 on 502 degrees of freedom
+Multiple R-squared:  0.1742,	Adjusted R-squared:  0.1693 
+F-statistic: 35.31 on 3 and 502 DF,  p-value: < 2.2e-16
+
+
+[[7]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-10.757  -2.588   0.031   1.267  76.378 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  30.0476     2.4459  12.285  < 2e-16 ***
+dis         -15.5543     1.7360  -8.960  < 2e-16 ***
+I(dis^2)      2.4521     0.3464   7.078 4.94e-12 ***
+I(dis^3)     -0.1186     0.0204  -5.814 1.09e-08 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.331 on 502 degrees of freedom
+Multiple R-squared:  0.2778,	Adjusted R-squared:  0.2735 
+F-statistic: 64.37 on 3 and 502 DF,  p-value: < 2.2e-16
+
+
+[[8]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-10.381  -0.412  -0.269   0.179  76.217 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)
+(Intercept) -0.605545   2.050108  -0.295    0.768
+rad          0.512736   1.043597   0.491    0.623
+I(rad^2)    -0.075177   0.148543  -0.506    0.613
+I(rad^3)     0.003209   0.004564   0.703    0.482
+
+Residual standard error: 6.682 on 502 degrees of freedom
+Multiple R-squared:    0.4,	Adjusted R-squared:  0.3965 
+F-statistic: 111.6 on 3 and 502 DF,  p-value: < 2.2e-16
+
+
+[[9]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-13.273  -1.389   0.046   0.536  76.950 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)  1.918e+01  1.180e+01   1.626    0.105
+tax         -1.533e-01  9.568e-02  -1.602    0.110
+I(tax^2)     3.608e-04  2.425e-04   1.488    0.137
+I(tax^3)    -2.204e-07  1.889e-07  -1.167    0.244
+
+Residual standard error: 6.854 on 502 degrees of freedom
+Multiple R-squared:  0.3689,	Adjusted R-squared:  0.3651 
+F-statistic:  97.8 on 3 and 502 DF,  p-value: < 2.2e-16
+
+
+[[10]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-6.833 -4.146 -1.655  1.408 82.697 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)   
+(Intercept)  477.18405  156.79498   3.043  0.00246 **
+ptratio      -82.36054   27.64394  -2.979  0.00303 **
+I(ptratio^2)   4.63535    1.60832   2.882  0.00412 **
+I(ptratio^3)  -0.08476    0.03090  -2.743  0.00630 **
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.122 on 502 degrees of freedom
+Multiple R-squared:  0.1138,	Adjusted R-squared:  0.1085 
+F-statistic: 21.48 on 3 and 502 DF,  p-value: 4.171e-13
+
+
+[[11]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-13.096  -2.343  -2.128  -1.439  86.790 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  1.826e+01  2.305e+00   7.924  1.5e-14 ***
+black       -8.356e-02  5.633e-02  -1.483    0.139    
+I(black^2)   2.137e-04  2.984e-04   0.716    0.474    
+I(black^3)  -2.652e-07  4.364e-07  -0.608    0.544    
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.955 on 502 degrees of freedom
+Multiple R-squared:  0.1498,	Adjusted R-squared:  0.1448 
+F-statistic: 29.49 on 3 and 502 DF,  p-value: < 2.2e-16
+
+
+[[12]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-15.234  -2.151  -0.486   0.066  83.353 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)  
+(Intercept)  1.2009656  2.0286452   0.592   0.5541  
+lstat       -0.4490656  0.4648911  -0.966   0.3345  
+I(lstat^2)   0.0557794  0.0301156   1.852   0.0646 .
+I(lstat^3)  -0.0008574  0.0005652  -1.517   0.1299  
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.629 on 502 degrees of freedom
+Multiple R-squared:  0.2179,	Adjusted R-squared:  0.2133 
+F-statistic: 46.63 on 3 and 502 DF,  p-value: < 2.2e-16
+
+
+[[13]]
+
+Call:
+lm(formula = fml, data = boston)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-24.427  -1.976  -0.437   0.439  73.655 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 53.1655381  3.3563105  15.840  < 2e-16 ***
+medv        -5.0948305  0.4338321 -11.744  < 2e-16 ***
+I(medv^2)    0.1554965  0.0171904   9.046  < 2e-16 ***
+I(medv^3)   -0.0014901  0.0002038  -7.312 1.05e-12 ***
+---
+codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 6.569 on 502 degrees of freedom
+Multiple R-squared:  0.4202,	Adjusted R-squared:  0.4167 
+F-statistic: 121.3 on 3 and 502 DF,  p-value: < 2.2e-16
+#+end_example
+
+With a p-value of 0.05, we can reject the null hypothesis for ~indus~,
+~noz~, ~dis~, ~ptratio~ and ~medv~. ~age~ also shows significant
+results for the squared and cubed terms but not the base term.
+
+Plotting these:
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch03q15d.png :width 800
+boston %>%
+  gather(-crim, -zn, -chas, -rm, -rad, -tax, -black, -lstat, 
+         key = "var", value = "value") %>% 
+  ggplot(aes(x = value, y = crim)) +
+    geom_point() +
+    stat_smooth(method = "lm", formula = "y ~ x + I(x^2) + I(x^3)",
+                aes(colour = "red")) +
+    facet_wrap(~ var, scales = "free") +
+    labs(title = "Scatterplots of predictors against crim using polynomial linear regression for Boston data")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch03q15d.png]]
+
+So the polynomial terms account for some of the variance in the data,
+but these are still not great fits. This can also be seen in the
+increased R-squared values, but none of them are above 0.5.
