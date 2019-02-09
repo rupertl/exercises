@@ -28,7 +28,7 @@ The number of predictors /p/ is extremely large, and the number of
 observations /n/ is small.
 #+END_QUOTE
 
-Flexible would be worse; this is the opposite case to a). We'd likely
+Flexible would be worse; this is the opposite case to (a). We'd likely
 see much more variance from the flexible model due to the high chance
 of changes for other data sets given low /n/, and the curse of
 dimensionality from high /p/.
@@ -399,7 +399,7 @@ variables in the data set.
  3rd Qu.:31.00   3rd Qu.:10830   3rd Qu.: 78.00  
  Max.   :64.00   Max.   :56233   Max.   :118.00
 #+end_example
-*** (c)
+
 #+BEGIN_QUOTE
 ii. Use the ~pairs()~ function to produce a scatterplot matrix of the
 first ten columns or variables of the data.
@@ -413,7 +413,7 @@ first ten columns or variables of the data.
 [[file:img/ch02q08cii.png]]
 
 #+BEGIN_QUOTE
-(c) iii. Use the ~plot()~ function to produce side-by-side boxplots of
+iii. Use the ~plot()~ function to produce side-by-side boxplots of
 ~Outstate~ versus ~Private~.
 #+END_QUOTE
 
@@ -430,7 +430,7 @@ for ii.
 [[file:img/ch02q08ciii.png]]
 
 #+BEGIN_QUOTE
-(c) iv. Create a new qualitative variable, called ~Elite~ , by binning
+iv. Create a new qualitative variable, called ~Elite~ , by binning
 the ~Top10perc~ variable. We are going to divide universities into two
 groups based on whether or not the proportion of students coming from
 the top 10% of their high school classes exceeds 50%.
@@ -464,7 +464,7 @@ are. Now use the ~plot()~ function to produce side-by-side boxplots of
 [[file:img/ch02q08civ.png]]
 
 #+BEGIN_QUOTE
-(c) v. Use the ~hist()~ function to produce some histograms with
+v. Use the ~hist()~ function to produce some histograms with
 differing numbers of bins for a few of the quantitative variables. You
 may find the command ~par(mfrow=c(2,2))~ useful: it will divide the
 print window into four regions so that four plots can be made
@@ -485,7 +485,7 @@ the screen in other ways.
 [[file:img/ch02q08cv.png]]
 
 #+BEGIN_QUOTE
-(c) vi. Continue exploring the data, and provide a brief summary of
+vi. Continue exploring the data, and provide a brief summary of
 what you discover.
 #+END_QUOTE
 

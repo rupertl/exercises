@@ -134,6 +134,7 @@ relationship is to either linear or cubic.
 Consider the fitted values that result from performing linear
 regression without an intercept. In this setting, the /i/th fitted
 value takes the form:
+#+END_QUOTE
 
 #+BEGIN_SRC latex :exports results :results raw  :file img/ch03q05_1.png
 \[
@@ -144,7 +145,9 @@ value takes the form:
 #+RESULTS:
 [[file:img/ch03q05_1.png]]
 
+#+BEGIN_QUOTE
 where
+#+END_QUOTE
 
 #+BEGIN_SRC latex :exports results :results raw  :file img/ch03q05_2.png
 \[
@@ -155,7 +158,9 @@ where
 #+RESULTS:
 [[file:img/ch03q05_2.png]]
 
+#+BEGIN_QUOTE
 Show that we can write
+#+END_QUOTE
 
 #+BEGIN_SRC latex :exports results :results raw  :file img/ch03q05_3.png
 \[
@@ -166,6 +171,7 @@ Show that we can write
 #+RESULTS:
 [[file:img/ch03q05_3.png]]
 
+#+BEGIN_QUOTE
 What is /aᵢ'/?
 #+END_QUOTE
 
@@ -294,8 +300,8 @@ prediction, but the prediction interval is wider as it indicates the
 95% confidence of predicting just that point.
 *** (b)
 #+BEGIN_QUOTE
-(b) Plot the response and the predictor. Use the ~abline()~ function
-to display the least squares regression line.
+Plot the response and the predictor. Use the ~abline()~ function to
+display the least squares regression line.
 #+END_QUOTE
 
 #+BEGIN_SRC R :exports both :results graphics :file img/ch03q08b.png
@@ -310,7 +316,7 @@ to display the least squares regression line.
 
 *** (c)
 #+BEGIN_QUOTE
-Use the plot() function to produce diagnostic plots of the least
+Use the ~plot()~ function to produce diagnostic plots of the least
 squares regression fit. Comment on any problems you see with the fit.
 #+END_QUOTE
 
@@ -460,7 +466,7 @@ a skewed pattern and an increase in variance on the right. Point 14
 has high leverage, but is below Cook's distance so is not critical. 
 *** (e)
 #+BEGIN_QUOTE
-(e) Use the ~*~ and ~:~ symbols to fit linear regression models with
+Use the ~*~ and ~:~ symbols to fit linear regression models with
 interaction effects. Do any interactions appear to be statistically
 significant?
 #+END_QUOTE
@@ -722,8 +728,8 @@ qualitative variables properly.
 where ~Urban~ and ~US~ are either 1 or 0 as defined in (b).
 *** (d)
 #+BEGIN_QUOTE
-(d) For which of the predictors can you reject the null hypothesis
-H₀ : β = 0?
+For which of the predictors can you reject the null hypothesis H₀ : β
+= 0?
 #+END_QUOTE
 
 The intercept, ~Price~ and ~US~, as the p-values are well below 0.05. 
@@ -769,7 +775,7 @@ How well do the models in (a) and (e) fit the data?
 Not very well, with R-squared values for both below 0.25.
 *** (g)
 #+BEGIN_QUOTE
-(g) Using the model from (e), obtain 95% confidence intervals for the
+Using the model from (e), obtain 95% confidence intervals for the
 coefficient(s).
 #+END_QUOTE
 
@@ -784,7 +790,7 @@ coefficient(s).
 : USYes        0.69151957  1.70776632
 *** (h)
 #+BEGIN_QUOTE
-(h) Is there evidence of outliers or high leverage observations in the
+Is there evidence of outliers or high leverage observations in the
 model from (e)?
 #+END_QUOTE
 
@@ -1033,7 +1039,7 @@ onto /Y/ the same as the coefficient estimate for the regression of
 /Y/ onto X/?
 #+END_QUOTE
 
-When the sum of /x²/ is equal to the sum of /y²//
+When the sum of /x²/ is equal to the sum of /y²/.
 *** (b) 
 #+BEGIN_QUOTE
 Generate an example in R with /n/ = 100 observations in which the
@@ -1414,10 +1420,10 @@ This problem focuses on the collinearity problem.
 #+BEGIN_QUOTE
 Perform the following commands in R :
 
-> set.seed (1)
-> x1 = runif (100)
-> x2 = 0.5*x1 + rnorm(100)/10
-> y = 2+2*x1 + 0.3*x2+rnorm(100)
+~> set.seed (1)~
+~> x1 = runif (100)~
+~> x2 = 0.5*x1 + rnorm(100)/10~
+~> y = 2+2*x1 + 0.3*x2+rnorm(100)~
 
 The last line corresponds to creating a linear model in which ~y~ is a
 function of ~x1~ and ~x2~. Write out the form of the linear model.

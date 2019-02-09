@@ -1083,8 +1083,8 @@ Write a function, ~Power()~ , that prints out the result of raising 2 to
 the 3rd power. In other words, your function should compute 2³ and
 print out the results. 
 
-/Hint: Recall that ~x^a~ raises x to the power a . Use the ~print()~
-function to output the result./
+/Hint: Recall that/ ~x^a~ /raises x to the power a. Use the/ ~print()~
+/function to output the result./
 #+END_QUOTE
 
 #+BEGIN_SRC R :results output :exports both
