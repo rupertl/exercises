@@ -1,0 +1,1683 @@
+#+TITLE: Introduction to Statistical Learning, Chapter 6: Linear Model Selection and Regularization
+#+AUTHOR: Rupert Lane
+#+EMAIL: rupert@rupert-lane.org
+#+PROPERTY: header-args:R :session *R*
+#+STARTUP: inlineimages
+#+STARTUP: latexpreview
+* Conceptual
+** Question 1
+#+BEGIN_QUOTE
+We perform best subset, forward stepwise, and backward stepwise
+selection on a single data set. For each approach, we obtain /p/ + 1
+models, containing 0, 1, 2, ..., /p/ predictors. Explain your answers:
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Which of the three models with /k/ predictors has the smallest
+/training/ RSS?
+#+END_QUOTE
+
+Best subset, as it will always pick the best fit for the model as it
+has access to all parameters.
+*** (b)
+#+BEGIN_QUOTE
+Which of the three models with /k/ predictors has the smallest /test/
+RSS?
+#+END_QUOTE
+
+It depends - best subset may win, but it may overfit, causing either
+stepwise approach to do better.
+*** (c)
+#+BEGIN_QUOTE
+True or False:
+
+i. The predictors in the /k/-variable model identified by forward
+stepwise are a subset of the predictors in the (/k/ +1)-variable model
+identified by forward stepwise selection.
+
+ii. The predictors in the /k/-variable model identified by backward
+stepwise are a subset of the predictors in the (/k/ + 1)- variable
+model identified by backward stepwise selection.
+
+iii. The predictors in the /k/-variable model identified by backward
+stepwise are a subset of the predictors in the (/k/ + 1)- variable
+model identified by forward stepwise selection.
+
+iv. The predictors in the /k/-variable model identified by forward
+stepwise are a subset of the predictors in the (/k/ +1)-variable
+model identified by backward stepwise selection.
+
+v. The predictors in the /k/-variable model identified by best
+subset are a subset of the predictors in the (/k/ + 1)-variable
+model identified by best subset selection.
+#+END_QUOTE
+
+i. is true, as we add one predictor to the existing set when going
+from /k/ to /k/ + 1.
+
+ii. is true also, as when we go from /k/ + 1 to /k/ we remove one
+predictor.
+
+iii. and iv. are false, as we can't guarantee the sets are the same
+when comparing forwards and backwards stepwise.
+
+v. is false, as at each level best subset may pick any set of predictors.
+** Question 2
+#+BEGIN_QUOTE
+For parts (a) through (c), indicate which of i. through iv. is correct.
+Justify your answer.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+The lasso, relative to least squares, is:
+
+i. More flexible and hence will give improved prediction accuracy when
+its increase in bias is less than its decrease in variance.
+
+ii. More flexible and hence will give improved prediction accuracy
+when its increase in variance is less than its decrease in bias.
+
+iii. Less flexible and hence will give improved prediction accuracy
+when its increase in bias is less than its decrease in variance.
+
+iv. Less flexible and hence will give improved prediction accuracy
+when its increase in variance is less than its decrease in bias.
+#+END_QUOTE
+
+iii. is true and the rest false. Lasso is less flexible, increasing
+bias, and helps decrease variance.
+*** (b)
+#+BEGIN_QUOTE
+Repeat (a) for ridge regression relative to least squares.
+#+END_QUOTE
+
+iii. also, same argument as lasso.
+*** (c)
+#+BEGIN_QUOTE
+Repeat (a) for non-linear methods relative to least squares.
+#+END_QUOTE
+
+ii. is true and the rest are false. Non linear methods are more
+flexible, decreasing bias, and will show improved results if the
+increase in variance is greater.
+** Question 3
+#+BEGIN_QUOTE
+Suppose we estimate the regression coefficients in a linear regression
+model by minimizing
+#+END_QUOTE
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch06q03_1.png
+$$\sum_{i=1}^{n}\left(y_i - \beta_0 - \sum_{j=1}^{p}\beta_{j}x_{ij}\right)^2 \textrm{ subject to } \sum_{j=1}^{p}|\beta_{j}| \le s$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch06q03_1.png]]
+
+#+BEGIN_QUOTE
+for a particular value of /s/. For parts (a) through (e), indicate which
+of i. through v. is correct. Justify your answer.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+As we increase /s/ from 0, the training RSS will:
+
+i. Increase initially, and then eventually start decreasing in an
+inverted U shape.
+
+ii. Decrease initially, and then eventually start increasing in a
+U shape.
+
+iii. Steadily increase.
+
+iv. Steadily decrease.
+
+v. Remain constant.
+#+END_QUOTE
+
+This is the lasso. 
+
+iv., steadily decrease. We are increasing the flexibility of the
+model so training error will get better.
+*** (b)
+#+BEGIN_QUOTE
+Repeat (a) for test RSS.
+#+END_QUOTE
+
+ii., decrease initially and then start increasing. At large values the
+increase in variance swamps the decrease in bias.
+*** (c)
+#+BEGIN_QUOTE
+Repeat (a) for variance.
+#+END_QUOTE
+
+iii., steadily increasing.
+*** (d)
+#+BEGIN_QUOTE
+Repeat (a) for (squared) bias.
+#+END_QUOTE
+
+iv., steadily decreasing.
+*** (e)
+#+BEGIN_QUOTE
+Repeat (a) for the irreducible error.
+#+END_QUOTE
+
+This will be always unrelated to the model, so v. is true.
+** Question 4
+#+BEGIN_QUOTE
+Suppose we estimate the regression coefficients in a linear regression
+model by minimizing
+#+END_QUOTE
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch06q04_1.png
+$$\sum_{i=1}^{n}\left(y_i - \beta_0 - \sum_{j=1}^{p}\beta_{j}x_{ij}\right)^2 + \lambda\sum_{j=1}^{p}\beta_{j}^{2}$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch06q04_1.png]]
+
+#+BEGIN_QUOTE
+for a particular value of /λ/. For parts (a) through (e), indicate
+which of i. through v. is correct. Justify your answer.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+As we increase /λ/ from 0, the training RSS will:
+
+i. Increase initially, and then eventually start decreasing in an
+inverted U shape.
+
+ii. Decrease initially, and then eventually start increasing in a
+U shape.
+
+iii. Steadily increase.
+
+iv. Steadily decrease.
+
+v. Remain constant.
+#+END_QUOTE
+
+iii., steadily increase, as at high lambdas coefficients go to zero,
+giving increased training error.
+*** (b)
+#+BEGIN_QUOTE
+Repeat (a) for test RSS.
+#+END_QUOTE
+
+ii., decrease and then increase, as we find the best value for lambda.
+*** (c)
+#+BEGIN_QUOTE
+Repeat (a) for variance.
+#+END_QUOTE
+
+iv., steadily decrease.
+
+*** (d)
+#+BEGIN_QUOTE
+Repeat (a) for (squared) bias.
+#+END_QUOTE
+
+iii., steadily increase.
+*** (e)
+#+BEGIN_QUOTE
+Repeat (a) for the irreducible error.
+#+END_QUOTE
+
+v., stay constant.
+** Question 5
+*Skipped*
+** Question 6
+#+BEGIN_QUOTE
+We will now explore (6.12) and (6.13) further.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Consider (6.12) with /p/ = 1. For some choice of /y₁/ and /λ/ > 0,
+plot (6.12) as a function of /β₁/ . Your plot should confirm that
+(6.12) is solved by (6.14).
+#+END_QUOTE
+*** (b)
+#+BEGIN_QUOTE
+Consider (6.13) with /p/ = 1. For some choice of /y₁/ and /λ/ > 0,
+plot (6.13) as a function of /β₁/. Your plot should confirm that
+(6.13) is solved by (6.15).
+#+END_QUOTE
+** Question 7
+*Skipped*
+* Applied
+#+BEGIN_SRC R :exports code :results none
+  library(MASS)
+  library(tidyverse)
+  library(ggplot2)
+  library(ISLR)
+  library(leaps)
+  library(glmnet)
+  library(pls)
+
+  options(crayon.enabled = FALSE)
+#+END_SRC
+
+** Question 8
+#+BEGIN_QUOTE
+In this exercise, we will generate simulated data, and will then use
+this data to perform best subset selection.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Use the ~rnorm()~ function to generate a predictor /X/ of length /n/ =
+100, as well as a noise vector /ε/ of length /n/ = 100.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports code :results none
+  set.seed(1)
+  X <- rnorm(100)
+  eps <- rnorm(100)
+#+END_SRC 
+
+*** (b)
+#+BEGIN_QUOTE
+Generate a response vector /Y/ of length /n/ = 100 according to
+the model
+
+/Y = β₀ + β₁X + β₂X² + β₃X³ + ε/
+
+where /β₀/ , /β₁/ , /β₂/ , and /β₃/ are constants of your choice.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  Y <- 10 + 9*X + 3*X^2 + 7*X^3 + eps
+  simData <- data_frame(X=X, Y=Y)
+  glimpse(simData)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Observations: 100
+: Variables: 2
+: $ X <dbl> -0.62645381, 0.18364332, -0.83562861, 1.59528080, 0.32950777, -0....
+: $ Y <dbl> 3.1979442, 11.8394338, -0.4212447, 60.5693620, 12.8871464, 2.5363...
+
+*** (c)
+#+BEGIN_QUOTE
+Use the ~regsubsets()~ function to perform best subset selection in
+order to choose the best model containing the predictors /X/, /X²/,
+..., /X¹⁰/. What is the best model obtained according to /Cₚ/, BIC,
+and adjusted /R²/? Show some plots to provide evidence for your
+answer, and report the coefficients of the best model obtained. Note
+you will need to use the ~data.frame()~ function to create a single data
+set containing both /X/ and /Y/.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  # raw=T to get simple non-orthogonal expression. Override nvmax to
+  # show up to 10 variables.
+  simDataBestSubset <- regsubsets(Y~poly(X,10,raw=T), data=simData, nvmax=10)
+  simDataBestSubsetSummary <- summary(simDataBestSubset)
+  simDataBestSubsetSummary
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Subset selection object
+Call: regsubsets.formula(Y ~ poly(X, 10, raw = T), data = simData, 
+    nvmax = 10)
+10 Variables  (and intercept)
+                       Forced in Forced out
+poly(X, 10, raw = T)1      FALSE      FALSE
+poly(X, 10, raw = T)2      FALSE      FALSE
+poly(X, 10, raw = T)3      FALSE      FALSE
+poly(X, 10, raw = T)4      FALSE      FALSE
+poly(X, 10, raw = T)5      FALSE      FALSE
+poly(X, 10, raw = T)6      FALSE      FALSE
+poly(X, 10, raw = T)7      FALSE      FALSE
+poly(X, 10, raw = T)8      FALSE      FALSE
+poly(X, 10, raw = T)9      FALSE      FALSE
+poly(X, 10, raw = T)10     FALSE      FALSE
+1 subsets of each size up to 10
+Selection Algorithm: exhaustive
+          poly(X, 10, raw = T)1 poly(X, 10, raw = T)2 poly(X, 10, raw = T)3
+1  ( 1 )  " "                   " "                   "*"                  
+2  ( 1 )  "*"                   " "                   "*"                  
+3  ( 1 )  "*"                   "*"                   "*"                  
+4  ( 1 )  "*"                   "*"                   "*"                  
+5  ( 1 )  "*"                   "*"                   "*"                  
+6  ( 1 )  "*"                   "*"                   "*"                  
+7  ( 1 )  "*"                   "*"                   "*"                  
+8  ( 1 )  "*"                   "*"                   "*"                  
+9  ( 1 )  "*"                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)4 poly(X, 10, raw = T)5 poly(X, 10, raw = T)6
+1  ( 1 )  " "                   " "                   " "                  
+2  ( 1 )  " "                   " "                   " "                  
+3  ( 1 )  " "                   " "                   " "                  
+4  ( 1 )  " "                   "*"                   " "                  
+5  ( 1 )  " "                   "*"                   "*"                  
+6  ( 1 )  " "                   " "                   " "                  
+7  ( 1 )  " "                   "*"                   "*"                  
+8  ( 1 )  "*"                   " "                   "*"                  
+9  ( 1 )  "*"                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)7 poly(X, 10, raw = T)8 poly(X, 10, raw = T)9
+1  ( 1 )  " "                   " "                   " "                  
+2  ( 1 )  " "                   " "                   " "                  
+3  ( 1 )  " "                   " "                   " "                  
+4  ( 1 )  " "                   " "                   " "                  
+5  ( 1 )  " "                   " "                   " "                  
+6  ( 1 )  "*"                   "*"                   "*"                  
+7  ( 1 )  " "                   "*"                   " "                  
+8  ( 1 )  " "                   "*"                   "*"                  
+9  ( 1 )  " "                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)10
+1  ( 1 )  " "                   
+2  ( 1 )  " "                   
+3  ( 1 )  " "                   
+4  ( 1 )  " "                   
+5  ( 1 )  " "                   
+6  ( 1 )  " "                   
+7  ( 1 )  "*"                   
+8  ( 1 )  "*"                   
+9  ( 1 )  "*"                   
+10  ( 1 ) "*"
+#+end_example
+
+We can now plot the adjusted /R²/, BIC, /Cₚ/ and RSS for these models.
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q08c_1.png
+  plotMetrics <- function(summary, p, title) {
+    m <- c(1:p)
+    metrics <- data_frame(m=m,
+                          adjr2=summary$adjr2, 
+                          cp=summary$cp,
+                          rss=summary$rss,
+                          bic=summary$bic) %>%
+      gather(metric, value, -m)
+    ggplot(metrics, aes(x=m, y=value)) +
+      geom_line() +
+      scale_x_continuous(breaks=m) +
+      facet_wrap(scale="free", ~metric) +
+      labs(title=title)
+  }
+
+  plotMetrics(simDataBestSubsetSummary, 10, 
+              "Model metrics for simulated data using best subset")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q08c_1.png]]
+
+As expected, the maximum /R²/, and minimum values for other metrics,
+can be found for the model with 3 predictors. Getting the
+coefficients:
+
+#+BEGIN_SRC R :results output :exports both
+  coef(simDataBestSubset, 3)
+#+END_SRC 
+
+#+RESULTS:
+:           (Intercept) poly(X, 10, raw = T)1 poly(X, 10, raw = T)2 
+:             10.061507              8.975280              2.876209 
+: poly(X, 10, raw = T)3 
+:              7.017639
+
+These are close to the /β/ values picked when generating /Y.
+*** (d)
+#+BEGIN_QUOTE
+Repeat (c), using forward stepwise selection and also using backwards
+stepwise selection. How does your answer compare to the results in
+(c)?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  simDataForward <- regsubsets(Y~poly(X,10,raw=T), data=simData, nvmax=10,
+                               method="forward")
+  simDataForwardSummary <- summary(simDataForward)
+  simDataForwardSummary
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Subset selection object
+Call: regsubsets.formula(Y ~ poly(X, 10, raw = T), data = simData, 
+    nvmax = 10, method = "forward")
+10 Variables  (and intercept)
+                       Forced in Forced out
+poly(X, 10, raw = T)1      FALSE      FALSE
+poly(X, 10, raw = T)2      FALSE      FALSE
+poly(X, 10, raw = T)3      FALSE      FALSE
+poly(X, 10, raw = T)4      FALSE      FALSE
+poly(X, 10, raw = T)5      FALSE      FALSE
+poly(X, 10, raw = T)6      FALSE      FALSE
+poly(X, 10, raw = T)7      FALSE      FALSE
+poly(X, 10, raw = T)8      FALSE      FALSE
+poly(X, 10, raw = T)9      FALSE      FALSE
+poly(X, 10, raw = T)10     FALSE      FALSE
+1 subsets of each size up to 10
+Selection Algorithm: forward
+          poly(X, 10, raw = T)1 poly(X, 10, raw = T)2 poly(X, 10, raw = T)3
+1  ( 1 )  " "                   " "                   "*"                  
+2  ( 1 )  "*"                   " "                   "*"                  
+3  ( 1 )  "*"                   "*"                   "*"                  
+4  ( 1 )  "*"                   "*"                   "*"                  
+5  ( 1 )  "*"                   "*"                   "*"                  
+6  ( 1 )  "*"                   "*"                   "*"                  
+7  ( 1 )  "*"                   "*"                   "*"                  
+8  ( 1 )  "*"                   "*"                   "*"                  
+9  ( 1 )  "*"                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)4 poly(X, 10, raw = T)5 poly(X, 10, raw = T)6
+1  ( 1 )  " "                   " "                   " "                  
+2  ( 1 )  " "                   " "                   " "                  
+3  ( 1 )  " "                   " "                   " "                  
+4  ( 1 )  " "                   "*"                   " "                  
+5  ( 1 )  " "                   "*"                   "*"                  
+6  ( 1 )  " "                   "*"                   "*"                  
+7  ( 1 )  " "                   "*"                   "*"                  
+8  ( 1 )  " "                   "*"                   "*"                  
+9  ( 1 )  " "                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)7 poly(X, 10, raw = T)8 poly(X, 10, raw = T)9
+1  ( 1 )  " "                   " "                   " "                  
+2  ( 1 )  " "                   " "                   " "                  
+3  ( 1 )  " "                   " "                   " "                  
+4  ( 1 )  " "                   " "                   " "                  
+5  ( 1 )  " "                   " "                   " "                  
+6  ( 1 )  " "                   " "                   "*"                  
+7  ( 1 )  "*"                   " "                   "*"                  
+8  ( 1 )  "*"                   "*"                   "*"                  
+9  ( 1 )  "*"                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)10
+1  ( 1 )  " "                   
+2  ( 1 )  " "                   
+3  ( 1 )  " "                   
+4  ( 1 )  " "                   
+5  ( 1 )  " "                   
+6  ( 1 )  " "                   
+7  ( 1 )  " "                   
+8  ( 1 )  " "                   
+9  ( 1 )  "*"                   
+10  ( 1 ) "*"
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q08d_1.png
+  plotMetrics(simDataForwardSummary, 10, 
+              "Model metrics for simulated data using forward stepwise")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q08d_1.png]]
+
+#+BEGIN_SRC R :results output :exports both
+  coef(simDataForward, 3)
+#+END_SRC 
+
+#+RESULTS:
+:           (Intercept) poly(X, 10, raw = T)1 poly(X, 10, raw = T)2 
+:             10.061507              8.975280              2.876209 
+: poly(X, 10, raw = T)3 
+:              7.017639
+
+An identical model has been selected.
+
+#+BEGIN_SRC R :results output :exports both
+  simDataBackward <- regsubsets(Y~poly(X,10,raw=T), data=simData, nvmax=10,
+                               method="backward")
+  simDataBackwardSummary <- summary(simDataBackward)
+  simDataBackwardSummary
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Subset selection object
+Call: regsubsets.formula(Y ~ poly(X, 10, raw = T), data = simData, 
+    nvmax = 10, method = "backward")
+10 Variables  (and intercept)
+                       Forced in Forced out
+poly(X, 10, raw = T)1      FALSE      FALSE
+poly(X, 10, raw = T)2      FALSE      FALSE
+poly(X, 10, raw = T)3      FALSE      FALSE
+poly(X, 10, raw = T)4      FALSE      FALSE
+poly(X, 10, raw = T)5      FALSE      FALSE
+poly(X, 10, raw = T)6      FALSE      FALSE
+poly(X, 10, raw = T)7      FALSE      FALSE
+poly(X, 10, raw = T)8      FALSE      FALSE
+poly(X, 10, raw = T)9      FALSE      FALSE
+poly(X, 10, raw = T)10     FALSE      FALSE
+1 subsets of each size up to 10
+Selection Algorithm: backward
+          poly(X, 10, raw = T)1 poly(X, 10, raw = T)2 poly(X, 10, raw = T)3
+1  ( 1 )  " "                   " "                   "*"                  
+2  ( 1 )  "*"                   " "                   "*"                  
+3  ( 1 )  "*"                   "*"                   "*"                  
+4  ( 1 )  "*"                   "*"                   "*"                  
+5  ( 1 )  "*"                   "*"                   "*"                  
+6  ( 1 )  "*"                   "*"                   "*"                  
+7  ( 1 )  "*"                   "*"                   "*"                  
+8  ( 1 )  "*"                   "*"                   "*"                  
+9  ( 1 )  "*"                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)4 poly(X, 10, raw = T)5 poly(X, 10, raw = T)6
+1  ( 1 )  " "                   " "                   " "                  
+2  ( 1 )  " "                   " "                   " "                  
+3  ( 1 )  " "                   " "                   " "                  
+4  ( 1 )  " "                   " "                   " "                  
+5  ( 1 )  " "                   " "                   " "                  
+6  ( 1 )  " "                   " "                   " "                  
+7  ( 1 )  " "                   " "                   "*"                  
+8  ( 1 )  "*"                   " "                   "*"                  
+9  ( 1 )  "*"                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)7 poly(X, 10, raw = T)8 poly(X, 10, raw = T)9
+1  ( 1 )  " "                   " "                   " "                  
+2  ( 1 )  " "                   " "                   " "                  
+3  ( 1 )  " "                   " "                   " "                  
+4  ( 1 )  " "                   " "                   "*"                  
+5  ( 1 )  " "                   "*"                   "*"                  
+6  ( 1 )  " "                   "*"                   "*"                  
+7  ( 1 )  " "                   "*"                   "*"                  
+8  ( 1 )  " "                   "*"                   "*"                  
+9  ( 1 )  " "                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)10
+1  ( 1 )  " "                   
+2  ( 1 )  " "                   
+3  ( 1 )  " "                   
+4  ( 1 )  " "                   
+5  ( 1 )  " "                   
+6  ( 1 )  "*"                   
+7  ( 1 )  "*"                   
+8  ( 1 )  "*"                   
+9  ( 1 )  "*"                   
+10  ( 1 ) "*"
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q08d_2.png
+  plotMetrics(simDataBackwardSummary, 10, 
+              "Model metrics for simulated data using backward stepwise")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q08d_2.png]]
+
+#+BEGIN_SRC R :results output :exports both
+  coef(simDataBackward, 3)
+#+END_SRC 
+
+#+RESULTS:
+:           (Intercept) poly(X, 10, raw = T)1 poly(X, 10, raw = T)2 
+:             10.061507              8.975280              2.876209 
+: poly(X, 10, raw = T)3 
+:              7.017639
+
+Again, we have ended up with an identical model.
+*** (e)
+#+BEGIN_QUOTE
+Now fit a lasso model to the simulated data, again using /X/, /X²/,
+..., /X¹⁰/ as predictors. Use cross-validation to select the optimal
+value of /λ/. Create plots of the cross-validation error as a function
+of /λ/. Report the resulting coefficient estimates, and discuss the
+results obtained.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q08e_1.png
+  set.seed(1)
+  simDataMatrix <- model.matrix(Y ~ poly(X, 10, raw=T), data=simData)[, -1]
+  simDataLassoCV <- cv.glmnet(simDataMatrix, Y, alpha=1)
+  plot(simDataLassoCV)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q08e_1.png]]
+
+#+BEGIN_SRC R :results output :exports both
+  bestLambda <- simDataLassoCV$lambda.min
+  bestLambda
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 0.1548041
+
+#+BEGIN_SRC R :results output :exports both
+  simDataLassoModel <- glmnet(simDataMatrix, Y, alpha=1)
+  predict(simDataLassoModel, s=bestLambda, type = "coefficients")
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+11 x 1 sparse Matrix of class "dgCMatrix"
+                                  1
+(Intercept)            1.024776e+01
+poly(X, 10, raw = T)1  8.961940e+00
+poly(X, 10, raw = T)2  2.540809e+00
+poly(X, 10, raw = T)3  6.916450e+00
+poly(X, 10, raw = T)4  4.986985e-02
+poly(X, 10, raw = T)5  2.978363e-04
+poly(X, 10, raw = T)6  .           
+poly(X, 10, raw = T)7  2.108684e-03
+poly(X, 10, raw = T)8  .           
+poly(X, 10, raw = T)9  7.671715e-05
+poly(X, 10, raw = T)10 .
+#+end_example
+
+So this has picked the model with coefficients for the first 4 terms
+close to the true model, and small coefficients for some other terms.
+
+*** (f)
+#+BEGIN_QUOTE
+Now generate a response vector Y according to the model
+
+/Y = β₀ + β₇X⁷ + ε/
+
+and perform best subset selection and the lasso. Discuss the results
+obtained.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  YF <- 10 + 3*X^7 + eps
+  simDataF <- data_frame(X=X, Y=YF)
+
+  simDataFBestSubset <- regsubsets(Y~poly(X,10,raw=T), data=simDataF, nvmax=10)
+  simDataFBestSubsetSummary <- summary(simDataFBestSubset)
+  simDataFBestSubsetSummary
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Subset selection object
+Call: regsubsets.formula(Y ~ poly(X, 10, raw = T), data = simDataF, 
+    nvmax = 10)
+10 Variables  (and intercept)
+                       Forced in Forced out
+poly(X, 10, raw = T)1      FALSE      FALSE
+poly(X, 10, raw = T)2      FALSE      FALSE
+poly(X, 10, raw = T)3      FALSE      FALSE
+poly(X, 10, raw = T)4      FALSE      FALSE
+poly(X, 10, raw = T)5      FALSE      FALSE
+poly(X, 10, raw = T)6      FALSE      FALSE
+poly(X, 10, raw = T)7      FALSE      FALSE
+poly(X, 10, raw = T)8      FALSE      FALSE
+poly(X, 10, raw = T)9      FALSE      FALSE
+poly(X, 10, raw = T)10     FALSE      FALSE
+1 subsets of each size up to 10
+Selection Algorithm: exhaustive
+          poly(X, 10, raw = T)1 poly(X, 10, raw = T)2 poly(X, 10, raw = T)3
+1  ( 1 )  " "                   " "                   " "                  
+2  ( 1 )  " "                   "*"                   " "                  
+3  ( 1 )  " "                   "*"                   " "                  
+4  ( 1 )  "*"                   "*"                   "*"                  
+5  ( 1 )  "*"                   "*"                   "*"                  
+6  ( 1 )  "*"                   " "                   "*"                  
+7  ( 1 )  "*"                   " "                   "*"                  
+8  ( 1 )  "*"                   "*"                   "*"                  
+9  ( 1 )  "*"                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)4 poly(X, 10, raw = T)5 poly(X, 10, raw = T)6
+1  ( 1 )  " "                   " "                   " "                  
+2  ( 1 )  " "                   " "                   " "                  
+3  ( 1 )  " "                   "*"                   " "                  
+4  ( 1 )  " "                   " "                   " "                  
+5  ( 1 )  "*"                   " "                   " "                  
+6  ( 1 )  " "                   " "                   "*"                  
+7  ( 1 )  " "                   "*"                   "*"                  
+8  ( 1 )  "*"                   " "                   "*"                  
+9  ( 1 )  "*"                   " "                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)7 poly(X, 10, raw = T)8 poly(X, 10, raw = T)9
+1  ( 1 )  "*"                   " "                   " "                  
+2  ( 1 )  "*"                   " "                   " "                  
+3  ( 1 )  "*"                   " "                   " "                  
+4  ( 1 )  "*"                   " "                   " "                  
+5  ( 1 )  "*"                   " "                   " "                  
+6  ( 1 )  "*"                   "*"                   " "                  
+7  ( 1 )  "*"                   "*"                   " "                  
+8  ( 1 )  "*"                   "*"                   " "                  
+9  ( 1 )  "*"                   "*"                   "*"                  
+10  ( 1 ) "*"                   "*"                   "*"                  
+          poly(X, 10, raw = T)10
+1  ( 1 )  " "                   
+2  ( 1 )  " "                   
+3  ( 1 )  " "                   
+4  ( 1 )  " "                   
+5  ( 1 )  " "                   
+6  ( 1 )  "*"                   
+7  ( 1 )  "*"                   
+8  ( 1 )  "*"                   
+9  ( 1 )  "*"                   
+10  ( 1 ) "*"
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q08f_1.png
+  plotMetrics(simDataFBestSubsetSummary, 10, 
+              "Model metrics for simulated data (f) using best subset")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q08f_1.png]]
+
+So here adjusted /R²/ is choosing the model with 4 variables but BIC
+and /Cₚ/ prefer 1 and 2 respectively.
+
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  simDataFMatrix <- model.matrix(Y ~ poly(X, 10, raw=T), data=simDataF)[, -1]
+  simDataFLassoCV <- cv.glmnet(simDataFMatrix, YF, alpha=1)
+  bestLambda <- simDataFLassoCV$lambda.min
+  bestLambda
+  simDataFLassoModel <- glmnet(simDataFMatrix, YF, alpha=1)
+  predict(simDataFLassoModel, s=bestLambda, type = "coefficients")
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[1] 5.818618
+
+11 x 1 sparse Matrix of class "dgCMatrix"
+                               1
+(Intercept)            10.364106
+poly(X, 10, raw = T)1   .       
+poly(X, 10, raw = T)2   .       
+poly(X, 10, raw = T)3   .       
+poly(X, 10, raw = T)4   .       
+poly(X, 10, raw = T)5   .       
+poly(X, 10, raw = T)6   .       
+poly(X, 10, raw = T)7   2.904768
+poly(X, 10, raw = T)8   .       
+poly(X, 10, raw = T)9   .       
+poly(X, 10, raw = T)10  .
+#+end_example
+
+The Lasso has selected the 7th term only with a relatively close
+coefficient.
+** Question 9
+#+BEGIN_QUOTE
+In this exercise, we will predict the number of applications received
+using the other variables in the ~College~ data set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Split the data set into a training set and a test set.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  college <- as_tibble(College) %>% mutate(id = 1:nrow(College))
+  collegeTrain <- college %>% sample_frac(0.75)
+  collegeTest <- anti_join(college, collegeTrain, by='id')
+  nrow(collegeTrain)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 583
+
+*** (b)
+#+BEGIN_QUOTE
+Fit a linear model using least squares on the training set, and report
+the test error obtained.
+#+END_QUOTE
+
+Let's set up a function to calculate test error using MSE
+
+#+BEGIN_SRC R :exports code :results none
+  calcErrorMSE <- function(predict, actual) {
+    mean((actual - predict)^2)
+  }
+#+END_SRC
+
+We'll use all variables in the model as a starting point.
+
+#+BEGIN_SRC R :results output :exports both
+  collegeLmAll <- lm(Apps~., data=collegeTrain)
+  summary(collegeLmAll)
+  calcErrorMSE(predict(collegeLmAll, collegeTest, type='response'),
+               collegeTest$Apps)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Apps ~ ., data = collegeTrain)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-5058.9  -417.0    -8.2   312.5  7167.2 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -6.846e+02  4.872e+02  -1.405  0.16052    
+PrivateYes  -5.381e+02  1.601e+02  -3.361  0.00083 ***
+Accept       1.670e+00  4.499e-02  37.115  < 2e-16 ***
+Enroll      -1.179e+00  2.221e-01  -5.311 1.57e-07 ***
+Top10perc    4.226e+01  6.675e+00   6.331 4.96e-10 ***
+Top25perc   -9.490e+00  5.133e+00  -1.849  0.06498 .  
+F.Undergrad  7.220e-02  3.895e-02   1.854  0.06432 .  
+P.Undergrad  5.132e-03  4.282e-02   0.120  0.90464    
+Outstate    -8.918e-02  2.243e-02  -3.977 7.89e-05 ***
+Room.Board   1.335e-01  5.721e-02   2.334  0.01995 *  
+Books        6.275e-02  2.751e-01   0.228  0.81966    
+Personal     1.123e-01  7.801e-02   1.439  0.15066    
+PhD         -7.230e+00  5.257e+00  -1.375  0.16961    
+Terminal    -4.819e+00  5.762e+00  -0.836  0.40335    
+S.F.Ratio    2.266e+01  1.653e+01   1.371  0.17091    
+perc.alumni  3.634e-01  4.816e+00   0.075  0.93988    
+Expend       1.059e-01  1.601e-02   6.613 8.77e-11 ***
+Grad.Rate    6.956e+00  3.459e+00   2.011  0.04483 *  
+id           2.639e-02  2.028e-01   0.130  0.89651    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1050 on 564 degrees of freedom
+Multiple R-squared:  0.9326,	Adjusted R-squared:  0.9304 
+F-statistic: 433.5 on 18 and 564 DF,  p-value: < 2.2e-16
+
+[1] 1128004
+#+end_example
+
+*** (c)
+#+BEGIN_QUOTE
+Fit a ridge regression model on the training set, with /λ/ chosen by
+cross-validation. Report the test error obtained.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  collegeTrainMatrix <- model.matrix(Apps~., data=collegeTrain)
+  collegeTestMatrix <- model.matrix(Apps~., data=collegeTest)
+  collegeRidgeCV <- cv.glmnet(collegeTrainMatrix, collegeTrain$Apps, alpha=0)
+  collegeRidgeModel  <- glmnet(collegeTrainMatrix, collegeTrain$Apps, alpha=0)
+  calcErrorMSE(predict(collegeRidgeModel, newx=collegeTestMatrix,
+                       s=collegeRidgeCV$lambda.min, type="response"),
+               collegeTest$Apps)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 991705.9
+*** (d)
+#+BEGIN_QUOTE
+Fit a lasso model on the training set, with /λ/ chosen by cross-
+validation. Report the test error obtained, along with the number of
+non-zero coefficient estimates.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  collegeLassoCV <- cv.glmnet(collegeTrainMatrix, collegeTrain$Apps, alpha=1)
+  collegeLassoModel  <- glmnet(collegeTrainMatrix, collegeTrain$Apps, alpha=1)
+  calcErrorMSE(predict(collegeLassoModel, newx=collegeTestMatrix,
+                       s=collegeLassoCV$lambda.min, type="response"),
+               collegeTest$Apps)
+
+  ## Coefficients
+  predict(collegeLassoModel, s=collegeLassoCV$lambda.min, type="coefficients")
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[1] 1116270
+
+20 x 1 sparse Matrix of class "dgCMatrix"
+                        1
+(Intercept) -7.208729e+02
+(Intercept)  .           
+PrivateYes  -5.343987e+02
+Accept       1.649720e+00
+Enroll      -1.010524e+00
+Top10perc    3.974335e+01
+Top25perc   -7.638744e+00
+F.Undergrad  4.894453e-02
+P.Undergrad  7.756027e-03
+Outstate    -8.598184e-02
+Room.Board   1.297977e-01
+Books        5.737883e-02
+Personal     1.113571e-01
+PhD         -6.830770e+00
+Terminal    -4.628787e+00
+S.F.Ratio    2.148617e+01
+perc.alumni  .           
+Expend       1.053458e-01
+Grad.Rate    6.537867e+00
+id           8.297194e-03
+#+end_example
+
+*** (e)
+#+BEGIN_QUOTE
+Fit a PCR model on the training set, with /M/ chosen by cross-
+validation. Report the test error obtained, along with the value
+of /M/ selected by cross-validation.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  collegePcrModel <- pcr(Apps~., data=collegeTrain, scale=T, validation="CV")
+  summary(collegePcrModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Data: 	X dimension: 583 18 
+	Y dimension: 583 1
+Fit method: svdpc
+Number of components considered: 18
+
+VALIDATION: RMSEP
+Cross-validated using 10 random segments.
+       (Intercept)  1 comps  2 comps  3 comps  4 comps  5 comps  6 comps
+CV            3983     3994     2205     2200     1815     1801     1710
+adjCV         3983     3995     2202     2202     1807     1799     1702
+       7 comps  8 comps  9 comps  10 comps  11 comps  12 comps  13 comps
+CV        1718     1711     1705      1618      1615      1623      1630
+adjCV     1712     1707     1707      1613      1610      1619      1625
+       14 comps  15 comps  16 comps  17 comps  18 comps
+CV         1639      1646      1458      1221      1165
+adjCV      1634      1641      1432      1212      1158
+
+TRAINING: % variance explained
+       1 comps  2 comps  3 comps  4 comps  5 comps  6 comps  7 comps  8 comps
+X     30.36165    54.81    61.56    67.37    72.62    77.62    82.02    85.61
+Apps   0.01427    70.07    70.35    80.36    80.60    82.81    82.81    82.97
+      9 comps  10 comps  11 comps  12 comps  13 comps  14 comps  15 comps
+X       88.63     91.41     93.57     95.46     96.98     97.98     98.83
+Apps    82.97     84.87     85.12     85.14     85.15     85.15     85.16
+      16 comps  17 comps  18 comps
+X        99.42     99.86    100.00
+Apps     91.70     92.78     93.26
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q09e_1.png
+  validationplot(collegePcrModel, val.type="MSEP")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q09e_1.png]]
+
+Going for /M/ = 10 as the point at which the error becomes low.
+
+#+BEGIN_SRC R :results output :exports both
+  calcErrorMSE(predict(collegePcrModel, collegeTest, ncomp=10),
+               collegeTest$Apps)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 1353711
+
+*** (f)
+#+BEGIN_QUOTE
+Fit a PLS model on the training set, with /M/ chosen by cross-
+validation. Report the test error obtained, along with the value
+of /M/ selected by cross-validation.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  collegePlsrModel <- plsr(Apps~., data=collegeTrain, scale=T, validation="CV")
+  summary(collegePlsrModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Data: 	X dimension: 583 18 
+	Y dimension: 583 1
+Fit method: kernelpls
+Number of components considered: 18
+
+VALIDATION: RMSEP
+Cross-validated using 10 random segments.
+       (Intercept)  1 comps  2 comps  3 comps  4 comps  5 comps  6 comps
+CV            3983     1989     1559     1553     1435     1309     1214
+adjCV         3983     1985     1547     1528     1423     1292     1204
+       7 comps  8 comps  9 comps  10 comps  11 comps  12 comps  13 comps
+CV        1196     1180     1174      1173      1170      1171      1168
+adjCV     1188     1172     1166      1165      1162      1163      1160
+       14 comps  15 comps  16 comps  17 comps  18 comps
+CV         1165      1165      1165      1165      1165
+adjCV      1157      1157      1158      1158      1158
+
+TRAINING: % variance explained
+      1 comps  2 comps  3 comps  4 comps  5 comps  6 comps  7 comps  8 comps
+X       24.26    30.04    52.08    62.81    66.10    70.16    75.28    77.62
+Apps    76.26    86.53    87.86    90.44    92.37    92.96    93.02    93.09
+      9 comps  10 comps  11 comps  12 comps  13 comps  14 comps  15 comps
+X       79.49     82.19     86.16     87.66     89.02     93.07     94.82
+Apps    93.18     93.22     93.23     93.25     93.26     93.26     93.26
+      16 comps  17 comps  18 comps
+X        96.30     98.99    100.00
+Apps     93.26     93.26     93.26
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q09f_1.png
+  validationplot(collegePlsrModel, val.type="MSEP")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q09f_1.png]]
+
+Going for /M/ = 10 again:
+
+#+BEGIN_SRC R :results output :exports both
+  calcErrorMSE(predict(collegePlsrModel, collegeTest, ncomp=10),
+               collegeTest$Apps)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 1086963
+
+*** (g)
+#+BEGIN_QUOTE
+Comment on the results obtained. How accurately can we predict the
+number of college applications received? Is there much difference
+among the test errors resulting from these five approaches?
+#+END_QUOTE
+
+| Model |     MSE | % diff from LR |
+|-------+---------+----------------|
+| LR    | 1128004 |              - |
+| Ridge |  991706 |         -12.1% |
+| Lasso | 1116270 |          -1.0% |
+| PCR   | 1353711 |          20.0% |
+| PLS   | 1086963 |          -3.6% |
+
+So here ridge regression performs the best and PCR the worst.
+** Question 10
+#+BEGIN_QUOTE
+We have seen that as the number of features used in a model increases,
+the training error will necessarily decrease, but the test error may
+not. We will now explore this in a simulated data set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Generate a data set with /p/ = 20 features, /n/ = 1,000 observations,
+and an associated quantitative response vector generated according to
+the model /Y = Xβ + ε/ where /β/ has some elements that are exactly
+equal to zero.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  p = 20
+  n = 1000
+  X = matrix(rnorm(n*p), n, p)
+  B = rnorm(p)
+  B[c(2,5,10,15,19)] = 0
+  glimpse(B)
+  eps = rnorm(p)
+  Y = X %*% B + eps
+  simData <- as_tibble(X) %>% mutate(Y=Y)
+  glimpse(simData)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+ num [1:20] 0.235 0 -0.642 -1.935 0 ...
+
+Observations: 1,000
+Variables: 21
+$ V1  <dbl> -0.62645381, 0.18364332, -0.83562861, 1.59528080, 0.32950777, -...
+$ V2  <dbl> 1.13496509, 1.11193185, -0.87077763, 0.21073159, 0.06939565, -1...
+$ V3  <dbl> -0.88614959, -1.92225490, 1.61970074, 0.51926990, -0.05584993, ...
+$ V4  <dbl> 0.73911492, 0.38660873, 1.29639717, -0.80355836, -1.60262567, 0...
+$ V5  <dbl> -1.13463018, 0.76455710, 0.57071014, -1.35169393, -2.02988547, ...
+$ V6  <dbl> -1.5163733, 0.6291412, -1.6781940, 1.1797811, 1.1176545, -1.237...
+$ V7  <dbl> -0.61882708, -1.10942196, -2.17033523, -0.03130307, -0.26039848...
+$ V8  <dbl> -1.32541772, 0.95197972, 0.86000439, 1.06079031, -0.35058396, -...
+$ V9  <dbl> 0.26370340, -0.82945185, -1.46163477, 1.68399018, -1.54432429, ...
+$ V10 <dbl> -1.21712008, -0.94622927, 0.09140980, 0.70135127, 0.67342236, 1...
+$ V11 <dbl> -0.80433160, -1.05652565, -1.03539578, -1.18556035, -0.50043951...
+$ V12 <dbl> -1.411521883, 1.083869657, 1.170222351, 0.294754540, -0.5544276...
+$ V13 <dbl> -0.93910663, 1.39366493, 1.62581486, 0.40900106, -0.09255856, 0...
+$ V14 <dbl> 0.2264537, -0.8185942, -0.8471526, -1.9843326, -0.8127788, 1.46...
+$ V15 <dbl> 0.5232667, 0.9935537, 0.2737370, -0.6949193, -0.7180502, -0.101...
+$ V16 <dbl> -0.21390898, -0.10672328, -0.46458931, -0.68427247, -0.79080075...
+$ V17 <dbl> 0.85763410, -1.62539515, -0.23427831, -1.03265445, -1.14114122,...
+$ V18 <dbl> 1.0496171412, 0.2903237344, 1.2421262227, -0.6850857039, -0.667...
+$ V19 <dbl> 0.95140989, 0.45709866, -0.35869346, -1.04586136, 0.30753453, 1...
+$ V20 <dbl> -2.07771241, -0.45446091, -0.16555991, 0.89765209, -0.02948916,...
+$ Y   <dbl> 3.03403399, 2.00277866, 0.18398288, 6.25257847, -2.31246916, -5...
+#+end_example
+
+*** (b)
+#+BEGIN_QUOTE
+Split your data set into a training set containing 100 observations
+and a test set containing 900 observations.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  simData <- mutate(simData, id = 1:nrow(simData))
+  simDataTrain <- simData %>% sample_frac(0.1)
+  simDataTest <- anti_join(simData, simDataTrain, by='id')
+  nrow(simDataTrain)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 100
+
+*** (c)
+#+BEGIN_QUOTE
+Perform best subset selection on the training set, and plot the
+training set MSE associated with the best model of each size.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  simDataBestSubset <- regsubsets(Y~. -id, intercept=FALSE, data=simDataTrain, nvmax=p)
+  summary(simDataBestSubset)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+Subset selection object
+Call: regsubsets.formula(Y ~ . - id, intercept = FALSE, data = simDataTrain, 
+    nvmax = p)
+20 Variables 
+    Forced in Forced out
+V2      FALSE      FALSE
+V3      FALSE      FALSE
+V4      FALSE      FALSE
+V5      FALSE      FALSE
+V6      FALSE      FALSE
+V7      FALSE      FALSE
+V8      FALSE      FALSE
+V9      FALSE      FALSE
+V10     FALSE      FALSE
+V11     FALSE      FALSE
+V12     FALSE      FALSE
+V13     FALSE      FALSE
+V14     FALSE      FALSE
+V15     FALSE      FALSE
+V16     FALSE      FALSE
+V17     FALSE      FALSE
+V18     FALSE      FALSE
+V19     FALSE      FALSE
+V20     FALSE      FALSE
+1 subsets of each size up to 20
+Selection Algorithm: exhaustive
+          V1  V2  V3  V4  V5  V6  V7  V8  V9  V10 V11 V12 V13 V14 V15 V16 V17
+1  ( 1 )  " " " " " " " " " " " " " " " " "*" " " " " " " " " " " " " " " " "
+2  ( 1 )  " " " " " " " " " " " " "*" " " "*" " " " " " " " " " " " " " " " "
+3  ( 1 )  " " " " " " " " " " " " "*" " " "*" " " " " " " " " " " " " " " " "
+4  ( 1 )  " " " " " " "*" " " " " "*" " " "*" " " " " " " " " " " " " " " " "
+5  ( 1 )  " " " " " " "*" " " " " "*" " " "*" " " " " " " " " " " " " " " " "
+6  ( 1 )  " " " " " " "*" " " " " "*" " " "*" " " " " " " " " "*" " " " " " "
+7  ( 1 )  " " " " " " "*" " " " " "*" " " "*" " " " " "*" " " "*" " " " " " "
+8  ( 1 )  " " " " " " "*" " " " " "*" "*" "*" " " " " "*" " " "*" " " " " " "
+9  ( 1 )  " " " " "*" "*" " " " " "*" "*" "*" " " " " "*" " " "*" " " " " " "
+10  ( 1 ) " " " " "*" "*" " " " " "*" "*" "*" " " "*" "*" " " "*" " " " " " "
+11  ( 1 ) " " " " "*" "*" " " " " "*" "*" "*" " " "*" "*" "*" "*" " " " " " "
+12  ( 1 ) " " " " "*" "*" " " " " "*" "*" "*" " " "*" "*" "*" "*" " " "*" " "
+13  ( 1 ) " " " " "*" "*" " " "*" "*" "*" "*" " " "*" "*" "*" "*" " " "*" " "
+14  ( 1 ) " " " " "*" "*" " " "*" "*" "*" "*" " " "*" "*" "*" "*" " " "*" "*"
+15  ( 1 ) "*" " " "*" "*" " " "*" "*" "*" "*" " " "*" "*" "*" "*" " " "*" "*"
+16  ( 1 ) "*" " " "*" "*" "*" "*" "*" "*" "*" " " "*" "*" "*" "*" " " "*" "*"
+17  ( 1 ) "*" " " "*" "*" "*" "*" "*" "*" "*" " " "*" "*" "*" "*" " " "*" "*"
+18  ( 1 ) "*" " " "*" "*" "*" "*" "*" "*" "*" " " "*" "*" "*" "*" "*" "*" "*"
+19  ( 1 ) "*" " " "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*"
+20  ( 1 ) "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*" "*"
+          V18 V19 V20
+1  ( 1 )  " " " " " "
+2  ( 1 )  " " " " " "
+3  ( 1 )  "*" " " " "
+4  ( 1 )  "*" " " " "
+5  ( 1 )  "*" " " "*"
+6  ( 1 )  "*" " " "*"
+7  ( 1 )  "*" " " "*"
+8  ( 1 )  "*" " " "*"
+9  ( 1 )  "*" " " "*"
+10  ( 1 ) "*" " " "*"
+11  ( 1 ) "*" " " "*"
+12  ( 1 ) "*" " " "*"
+13  ( 1 ) "*" " " "*"
+14  ( 1 ) "*" " " "*"
+15  ( 1 ) "*" " " "*"
+16  ( 1 ) "*" " " "*"
+17  ( 1 ) "*" "*" "*"
+18  ( 1 ) "*" "*" "*"
+19  ( 1 ) "*" "*" "*"
+20  ( 1 ) "*" "*" "*"
+#+end_example
+
+#+BEGIN_SRC R :results output :exports both
+  calcMSE <- function(model, data, p) {
+    mse <- rep(NA, p)
+    for (i in 1:p) {
+      c <- coef(model,id=i)
+      x <- data %>% dplyr::select(names(c)) %>% as.matrix
+      y <- x %*% c
+      mse[i] <- mean((y - data$Y)^2)
+    }
+    return(mse)
+  }
+
+  trainMSE <- calcMSE(simDataBestSubset, simDataTrain, p)
+  trainMSE
+#+END_SRC 
+
+#+RESULTS:
+:  [1] 12.3083798  9.1501649  6.7938833  4.3631990  3.6334162  2.8082284
+:  [7]  2.4065694  1.9399979  1.6530990  1.3535581  1.1512310  1.0359039
+: [13]  0.8913562  0.8079661  0.7519522  0.7082095  0.6960340  0.6916223
+: [19]  0.6861549  0.6861520
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q10c.png
+  qplot(x=c(1:p), y=trainMSE, geom="line", xlab="model vars", 
+        main="Training MSE for bset subset")
+#+END_SRC 
+
+
+#+RESULTS:
+[[file:img/ch06q10c.png]]
+
+*** (d)
+#+BEGIN_QUOTE
+Plot the test set MSE associated with the best model of each size.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  testMSE <- calcMSE(simDataBestSubset, simDataTest, p)
+  testMSE
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 13.763008 10.928315  8.453934  4.740756  3.699806  3.462516  3.077808
+:  [8]  2.546482  2.121500  1.370377  1.357112  1.255021  1.248341  1.116610
+: [15]  1.070575  1.112182  1.141794  1.157171  1.174394  1.174727
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q10d.png
+  qplot(x=c(1:p), y=testMSE, geom="line", xlab="model vars", 
+        main="Test MSE for bset subset")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q10d.png]]
+
+*** (e)
+#+BEGIN_QUOTE
+For which model size does the test set MSE take on its minimum value?
+Comment on your results. If it takes on its minimum value for a model
+containing only an intercept or a model containing all of the
+features, then play around with the way that you are generating the
+data in (a) until you come up with a scenario in which the test set
+MSE is minimized for an intermediate model size.
+#+END_QUOTE
+
+For the test data, the model with 15 variables performs the best. Note
+for the training data the model with all variables performs the best.
+*** (f)
+#+BEGIN_QUOTE
+How does the model at which the test set MSE is minimized compare to
+the true model used to generate the data? Comment on the coefficient
+values.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  coef(simDataBestSubset, id=15)
+#+END_SRC 
+
+#+RESULTS:
+:         V1         V3         V4         V6         V7         V8         V9 
+:  0.2360465 -0.5319755 -2.0082005 -0.3824395 -1.3644490  0.7593628  2.0232706 
+:        V11        V12        V13        V14        V16        V17        V18 
+:  0.6863309  0.6678143 -0.5418380 -0.7254442 -0.3624305  0.2777553  1.7249404 
+:        V20 
+: -0.9552837
+
+Pretty good, it has deselected all the zero variables (2, 5, 10, 15, 19).
+*** (g)
+#+BEGIN_QUOTE
+Create a plot displaying
+#+END_QUOTE
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch06q10g_1.png
+$$\sqrt{\sum_{j=1}^{p}(\beta_j - \hat{\beta_{j}^{r}})^2}$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch06q10g_1.png]]
+
+#+BEGIN_QUOTE
+for a range of values of /r/, where /β̂_j^r/ is the /j/-th coefficient
+estimate for the best model containing /r/ coefficients. Comment on
+what you observe. How does this compare to the test MSE plot from (d)?
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q10g.png
+  ## Turn a sparse vector of named coefficients into a vector of size p
+  ## containing those items and zero in other slots.
+  ## I'm sure there must be an easier way to do this.
+  generateFullCoeffs <- function(sparse, p) {
+      full <- rep(0, p)
+      for (sparseIndex in 1:length(sparse)) {
+        name <- names(sparse)[sparseIndex] # eg "V18"
+        fullIndex <- as.integer(substr(name, 2, 4)) # eg 18
+        full[fullIndex] <- sparse[sparseIndex]
+      }
+      return(full)
+  }
+
+  err <- rep(NA, p)
+  for (i in 1:p) {
+    Bhat <- generateFullCoeffs(coef(simDataBestSubset,id=i), p)
+    err[i] = sqrt(sum((B - Bhat)^2))
+  }
+  qplot(x=c(1:p), y=err, geom="line", xlab="model vars", 
+        main="Square root of sum of squares of coeff diffs for models")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q10g.png]]
+
+The plot is similar - starts high and decreases, reaching a minimum at
+15 model variables, then slowly increases. This is what we'd expect,
+as the difference will be less when the model coefficients are closest
+to the true model.
+** Question 11
+#+BEGIN_QUOTE
+We will now try to predict per capita crime rate in the ~Boston~ data
+set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Try out some of the regression methods explored in this chapter, such
+as best subset selection, the lasso, ridge regression, and PCR.
+Present and discuss results for the approaches that you consider.
+#+END_QUOTE
+
+Split the data into train and test:
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  boston <- as_tibble(Boston) %>% mutate(id = 1:nrow(Boston))
+  bostonTrain <- boston %>% sample_frac(0.75)
+  bostonTest <- anti_join(boston, bostonTrain, by='id')
+  glimpse(bostonTrain)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Observations: 380
+Variables: 15
+$ crim    <dbl> 0.97617, 0.07875, 0.04590, 4.66883, 0.11432, 6.71772, 3.568...
+$ zn      <dbl> 0.0, 45.0, 52.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0....
+$ indus   <dbl> 21.89, 3.44, 5.32, 18.10, 8.56, 18.10, 18.10, 3.24, 9.90, 8...
+$ chas    <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,...
+$ nox     <dbl> 0.624, 0.437, 0.405, 0.713, 0.520, 0.713, 0.580, 0.460, 0.5...
+$ rm      <dbl> 5.757, 6.782, 6.315, 5.976, 6.781, 6.749, 6.437, 6.333, 6.2...
+$ age     <dbl> 98.4, 41.1, 45.6, 87.9, 71.3, 92.6, 75.0, 17.2, 82.8, 94.1,...
+$ dis     <dbl> 2.3460, 3.7886, 7.3172, 2.5806, 2.8561, 2.3236, 2.8965, 5.2...
+$ rad     <int> 4, 5, 6, 24, 5, 24, 24, 4, 4, 4, 5, 3, 5, 5, 24, 7, 4, 24, ...
+$ tax     <dbl> 437, 398, 293, 666, 384, 666, 666, 430, 304, 307, 384, 247,...
+$ ptratio <dbl> 21.2, 15.2, 16.6, 20.2, 20.9, 20.2, 20.2, 16.9, 18.4, 21.0,...
+$ black   <dbl> 262.76, 393.87, 396.90, 10.48, 395.58, 0.32, 393.37, 375.21...
+$ lstat   <dbl> 17.31, 6.68, 7.60, 19.01, 7.67, 17.44, 14.36, 7.34, 7.90, 2...
+$ medv    <dbl> 15.6, 32.0, 22.3, 12.7, 26.5, 13.4, 23.2, 22.6, 21.6, 12.7,...
+$ id      <int> 135, 188, 289, 457, 102, 451, 473, 330, 314, 31, 103, 88, 3...
+#+end_example
+
+Try best subset.
+
+#+BEGIN_SRC R :results output :exports both
+  p = 13
+  bostonBestSubset <- regsubsets(crim~. -id, data=bostonTrain, nvmax=p)
+  summary(bostonBestSubset)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Subset selection object
+Call: regsubsets.formula(crim ~ . - id, data = bostonTrain, nvmax = p)
+13 Variables  (and intercept)
+        Forced in Forced out
+zn          FALSE      FALSE
+indus       FALSE      FALSE
+chas        FALSE      FALSE
+nox         FALSE      FALSE
+rm          FALSE      FALSE
+age         FALSE      FALSE
+dis         FALSE      FALSE
+rad         FALSE      FALSE
+tax         FALSE      FALSE
+ptratio     FALSE      FALSE
+black       FALSE      FALSE
+lstat       FALSE      FALSE
+medv        FALSE      FALSE
+1 subsets of each size up to 13
+Selection Algorithm: exhaustive
+          zn  indus chas nox rm  age dis rad tax ptratio black lstat medv
+1  ( 1 )  " " " "   " "  " " " " " " " " "*" " " " "     " "   " "   " " 
+2  ( 1 )  " " " "   " "  " " " " " " " " "*" " " " "     " "   "*"   " " 
+3  ( 1 )  " " " "   " "  " " " " " " " " "*" " " " "     "*"   "*"   " " 
+4  ( 1 )  "*" " "   " "  " " " " " " "*" "*" " " " "     " "   "*"   " " 
+5  ( 1 )  "*" " "   " "  "*" " " " " "*" "*" " " " "     " "   "*"   " " 
+6  ( 1 )  "*" " "   " "  "*" " " " " "*" "*" " " " "     " "   "*"   "*" 
+7  ( 1 )  "*" " "   " "  "*" " " " " "*" "*" " " "*"     " "   "*"   "*" 
+8  ( 1 )  "*" " "   " "  "*" "*" " " "*" "*" " " "*"     " "   "*"   "*" 
+9  ( 1 )  "*" " "   " "  "*" "*" " " "*" "*" " " "*"     "*"   "*"   "*" 
+10  ( 1 ) "*" "*"   " "  "*" "*" " " "*" "*" " " "*"     "*"   "*"   "*" 
+11  ( 1 ) "*" "*"   "*"  "*" "*" " " "*" "*" " " "*"     "*"   "*"   "*" 
+12  ( 1 ) "*" "*"   "*"  "*" "*" " " "*" "*" "*" "*"     "*"   "*"   "*" 
+13  ( 1 ) "*" "*"   "*"  "*" "*" "*" "*" "*" "*" "*"     "*"   "*"   "*"
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q11a_1.png
+  plotMetrics(summary(bostonBestSubset), p,
+              "Model training metrics for Boston crime data using best subset")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q11a_1.png]]
+
+Each metric gives different values for best model, but the one for p=2
+seems a good but not optimal fit for all.
+
+Let's look at the test MSE; we have to adjust our previous ~calcMSE~
+function to take into account the intercept.
+
+#+BEGIN_SRC R :results output :exports both
+  calcMSEWithIntercept <- function(model, data, p) {
+    mse <- rep(NA, p)
+    for (i in 1:p) {
+      c <- coef(model,id=i)[-1]
+      intercept = coef(model,id=i)[1]
+      x <- data %>% dplyr::select(names(c)) %>% as.matrix
+      y <- intercept + x %*% c
+      mse[i] <- mean((y - data$crim)^2)
+    }
+    return(mse)
+  }
+  mse <- calcMSEWithIntercept(bostonBestSubset, bostonTest, p)
+  mse
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 65.96946 65.03147 63.60050 64.59293 64.59668 62.76875 62.18292 62.07102
+:  [9] 61.24864 60.97209 60.94705 60.85684 60.86772
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q11a_2.png
+  qplot(x=c(1:p), y=mse, geom="line", xlab="model vars", ylim=c(0,70),
+        main="Test MSE for Boston data bset subset")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q11a_2.png]]
+
+The numbers are close, wiith a gradual decrease in error as the number
+of variables increases. Looking at some of the models:
+
+#+BEGIN_SRC R :results output :exports both
+  coef(bostonBestSubset, id=2)
+  coef(bostonBestSubset, id=9)
+#+END_SRC 
+
+#+RESULTS:
+: (Intercept)         rad       lstat 
+:  -4.4257765   0.4794623   0.2612928
+: 
+:   (Intercept)            zn           nox            rm           dis 
+:  11.492779997   0.039934114 -12.283264929   0.746931152  -0.905807620 
+:           rad       ptratio         black         lstat          medv 
+:   0.506174928  -0.282613457  -0.003853831   0.193362249  -0.161320162
+
+Next we will try ridge and lasso methods using cross-validation:
+
+#+BEGIN_SRC R :results output :exports both
+  bostonGlmnet <- function(a) {
+    set.seed(1)
+    bostonCV <- cv.glmnet(bostonTrainMatrix, bostonTrain$crim, alpha=a)
+    bostonModel  <- glmnet(bostonTrainMatrix, bostonTrain$crim, alpha=a)
+    err <- calcErrorMSE(predict(bostonModel, newx=bostonTestMatrix,
+                                s=bostonCV$lambda.min, type="response"),
+                        bostonTest$crim)
+    print(err)
+
+    ## Coefficients
+    predict(bostonModel, s=bostonCV$lambda.min, type="coefficients")
+  }
+
+  bostonTrainMatrix <- model.matrix(crim~. -id, data=bostonTrain)
+  bostonTestMatrix <- model.matrix(crim~. -id, data=bostonTest)
+  print("Ridge")
+  bostonGlmnet(0)
+  print("Lasso")
+  bostonGlmnet(1)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[1] "Ridge"
+
+[1] 61.97949
+15 x 1 sparse Matrix of class "dgCMatrix"
+                        1
+(Intercept)  4.397169e+00
+(Intercept)  .           
+zn           2.932028e-02
+indus       -6.601078e-02
+chas        -8.035088e-01
+nox         -4.985812e+00
+rm           5.076707e-01
+age         -3.883378e-05
+dis         -6.710944e-01
+rad          3.853701e-01
+tax          4.142772e-03
+ptratio     -1.152076e-01
+black       -4.988217e-03
+lstat        2.012613e-01
+medv        -1.050181e-01
+
+[1] "Lasso"
+
+[1] 63.59236
+15 x 1 sparse Matrix of class "dgCMatrix"
+                       1
+(Intercept) -0.733675892
+(Intercept)  .          
+zn           0.011744876
+indus        .          
+chas        -0.455005224
+nox          .          
+rm           .          
+age          .          
+dis         -0.213791289
+rad          0.442018467
+tax          .          
+ptratio      .          
+black       -0.003494939
+lstat        0.198808401
+medv        -0.025982146
+#+end_example
+
+Results are close in terms of comparing test MSE with best subset.
+Lasso has removed six variables.
+
+And finally PCR:
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(1)
+  bostonPcrModel <- pcr(crim~. -id, data=bostonTrain, scale=T, validation="CV")
+  summary(bostonPcrModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Data: 	X dimension: 380 13 
+	Y dimension: 380 1
+Fit method: svdpc
+Number of components considered: 13
+
+VALIDATION: RMSEP
+Cross-validated using 10 random segments.
+       (Intercept)  1 comps  2 comps  3 comps  4 comps  5 comps  6 comps
+CV           8.074    6.654    6.649    6.284    6.276    6.319    6.328
+adjCV        8.074    6.651    6.645    6.276    6.269    6.312    6.319
+       7 comps  8 comps  9 comps  10 comps  11 comps  12 comps  13 comps
+CV       6.307    6.149    6.213     6.195     6.204     6.215     6.151
+adjCV    6.298    6.137    6.202     6.181     6.188     6.197     6.133
+
+TRAINING: % variance explained
+      1 comps  2 comps  3 comps  4 comps  5 comps  6 comps  7 comps  8 comps
+X       47.46    60.80    69.57     76.6    83.09    88.17    91.40    93.66
+crim    33.03    33.72    40.77     41.0    41.09    41.65    42.34    45.13
+      9 comps  10 comps  11 comps  12 comps  13 comps
+X       95.52     97.17     98.56     99.53    100.00
+crim    45.14     45.70     46.03     46.67     47.81
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch06q11a_3.png
+  validationplot(bostonPcrModel, val.type="MSEP")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch06q11a_3.png]]
+
+Trying 3 components: 
+
+#+BEGIN_SRC R :results output :exports both
+  calcErrorMSE(predict(bostonPcrModel, bostonTest, ncomp=3),
+               bostonTest$crim)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 64.87154
+
+which is comparable to the previous methods.
+
+*** (b)
+#+BEGIN_QUOTE
+Propose a model (or set of models) that seem to perform well on this
+data set, and justify your answer. Make sure that you are evaluating
+model performance using validation set error, cross-validation, or
+some other reasonable alternative, as opposed to using training error.
+#+END_QUOTE
+
+Given the interactions between variables we've seen previously with
+this data set, the PCR method seems a good approach. But all of them
+perform roughly the same.
+*** (c)
+#+BEGIN_QUOTE
+Does your chosen model involve all of the features in the data set?
+Why or why not?
+#+END_QUOTE
+
+Not all. Best subset has selected a subset, ridge uses them all, lasso
+has deselected one feature and PCR uses a combination.
