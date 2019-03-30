@@ -1,0 +1,1417 @@
+#+TITLE: Introduction to Statistical Learning, Chapter 7: Moving Beyond Linearity
+#+AUTHOR: Rupert Lane
+#+EMAIL: rupert@rupert-lane.org
+#+PROPERTY: header-args:R :session *R*
+#+STARTUP: inlineimages
+#+STARTUP: latexpreview
+* Conceptual
+#+BEGIN_SRC R :exports code :results none
+  library(tidyverse)
+  library(ggplot2)
+  library(ISLR)
+  library(boot)
+  library(splines)
+  library(MASS)
+  library(leaps)
+  library(gam)
+
+  options(crayon.enabled = FALSE)
+#+END_SRC
+
+** Question 1
+Skipped
+** Question 2
+#+BEGIN_QUOTE
+Suppose that a curve /ĝ/ is computed to smoothly fit a set of /n/ points
+using the following formula:
+#+END_QUOTE
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch07q01_1.png
+$$\hat{g} = \mathop{\mathrm{arg\,min}}_g\left(\sum_{i=1}^{n}(y_i-g(x_i))^2 +\lambda \int [g^{(m)}(x)]^2 dx\right)$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q01_1.png]]
+
+#+BEGIN_QUOTE
+where /g^(m)/ represents the /m/-th derivative of /g/ (and /g^(0) = g/). Provide
+example sketches of /ĝ/ in each of the following scenarios.
+
+(a) /λ = ∞, m = 0./
+
+(b) /λ = ∞, m = 1./
+
+(c) /λ = ∞, m = 2./
+
+(d) /λ = ∞, m = 3./
+
+(e) /λ = 0, m = 3./
+#+END_QUOTE
+
+In cases (a) - (d), lambda being infinite will cause the right hand
+term to dominate. In (c), a cubic function will minimise the
+expression as per (7.11), so for (b) a quadratic function and (a) a
+linear function will minimise. For (d), an equation of power 4 will
+minimise.
+
+For (e), the right hand term drops out, and the expression on the
+left, the RSS equation, applies. Here a function that interpolates the
+points of /x/ will minimise the expression.
+
+** Question 3
+#+BEGIN_QUOTE
+Suppose we fit a curve with basis functions /b₁(X) = X/, /b₂(X) = (X −
+1)²I(X ≥ 1)/. (Note that /I(X ≥ 1)/ equals 1 for /X/ ≥ 1 and 0
+otherwise.) We fit the linear regression model /Y = β₀ + β₁b₁(X) +
+β₂b₂(X) + ε/, and obtain coefficient estimates /β̂₀/ = 1, /β̂₁/ = 1,
+/β̂₂/ = −2. Sketch the estimated curve between /X/ = −2 and /X/ = 2.
+Note the intercepts, slopes, and other relevant information.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch07q03_1.png
+  f3 <- function(x) {
+    return(1 + x + -2 * (x-1)^2 * ifelse(x >= 1, 1, 0)) 
+  }
+
+  d <- data_frame(x=seq(-2, 2, 0.1), y=f3(x))
+
+  ggplot(d, aes(x=x, y=y)) +
+    ylim(-3, 3) + 
+    geom_hline(yintercept=0) + 
+    geom_vline(xintercept=0) + 
+    geom_line(colour='red')
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch07q03_1.png]]
+** Question 4
+#+BEGIN_QUOTE
+Suppose we fit a curve with basis functions /b₁(X) = I(0 ≤ X ≤ 2) − (X
+− 1)I(1 ≤ X ≤ 2)/, /b₂(X) = (X − 3)I(3 ≤ X ≤ 4) + I(4 < X ≤ 5)/. We
+fit the linear regression model /Y = β₀ + β₁b₁(X) + β₂b₂(X) + ε/, and
+obtain coefficient estimates /β̂₀/ = 1, /β̂₁/ = 1, /β̂₂/ = 3. Sketch the
+estimated curve between /X/ = −2 and /X/ = 2. Note the intercepts,
+slopes, and other relevant information.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch07q04_1.png
+    f4 <- function(x) {
+      return(1 +
+             ifelse(x >= 0 & x <= 2, 1, 0) - (x - 1)*ifelse(x >= 1 & x <= 2, 1, 0) +
+             3 * ((x-3)*ifelse(x >= 3 & x <= 4, 1, 0) + ifelse(x > 4 & x <= 5, 1, 0)))
+    }
+
+    d <- data_frame(x=seq(-2, 2, 0.01), y=f4(x))
+
+    ggplot(d, aes(x=x, y=y)) +
+      ylim(0, 3) + 
+      geom_hline(yintercept=0) + 
+      geom_vline(xintercept=0) + 
+      geom_line(colour='red')
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch07q04_1.png]]
+** Question 5
+#+BEGIN_QUOTE
+Consider two curves, /ĝ₁/ and /ĝ₂/, defined by
+#+END_QUOTE
+
+#+BEGIN_SRC latex :exports results :results raw  :file img/ch07q05_1.png
+$$\hat{g_1} = \mathop{\mathrm{arg\,min}}_g\left(\sum_{i=1}^{n}(y_i-g(x_i))^2 +\lambda \int [g^{(3)}(x)]^2 dx\right)$$
+$$\hat{g_2} = \mathop{\mathrm{arg\,min}}_g\left(\sum_{i=1}^{n}(y_i-g(x_i))^2 +\lambda \int [g^{(4)}(x)]^2 dx\right)$$
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q05_1.png]]
+
+
+#+BEGIN_QUOTE
+where /g^(m)/ represents the /m/-th derivative of /g/.
+
+(a) As /λ → ∞/, will /ĝ₁/ or /ĝ₂/ have the smaller training RSS?
+
+(b) As /λ → ∞/, will /ĝ₁/ or /ĝ₂/ have the smaller test RSS?
+
+(c) For /λ/ = 0, will /ĝ₁/ or /ĝ₂/ have the smaller training and test RSS?
+#+END_QUOTE
+
+/ĝ₂/ will have the smaller training RSS as /λ → ∞/ because it is more
+flexible, but the test RSS is likely to favour /ĝ₁/ due to lower
+variance.
+
+For (c), both functions will give the same results as the second term
+is removed.
+* Applied
+** Question 6
+#+BEGIN_QUOTE
+In this exercise, you will further analyze the ~Wage~ data set
+considered throughout this chapter.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Perform polynomial regression to predict ~wage~ using ~age~. Use
+cross-validation to select the optimal degree /d/ for the polynomial.
+What degree was chosen, and how does this compare to the results of
+hypothesis testing using ANOVA? Make a plot of the resulting
+polynomial fit to the data.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  wage <- as_tibble(Wage)
+  glimpse(wage)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Observations: 3,000
+Variables: 11
+$ year       <int> 2006, 2004, 2003, 2003, 2005, 2008, 2009, 2008, 2006, 20...
+$ age        <int> 18, 24, 45, 43, 50, 54, 44, 30, 41, 52, 45, 34, 35, 39, ...
+$ maritl     <fct> 1. Never Married, 1. Never Married, 2. Married, 2. Marri...
+$ race       <fct> 1. White, 1. White, 1. White, 3. Asian, 1. White, 1. Whi...
+$ education  <fct> 1. < HS Grad, 4. College Grad, 3. Some College, 4. Colle...
+$ region     <fct> 2. Middle Atlantic, 2. Middle Atlantic, 2. Middle Atlant...
+$ jobclass   <fct> 1. Industrial, 2. Information, 1. Industrial, 2. Informa...
+$ health     <fct> 1. <=Good, 2. >=Very Good, 1. <=Good, 2. >=Very Good, 1....
+$ health_ins <fct> 2. No, 2. No, 1. Yes, 1. Yes, 1. Yes, 1. Yes, 1. Yes, 1....
+$ logwage    <dbl> 4.318063, 4.255273, 4.875061, 5.041393, 4.318063, 4.8450...
+$ wage       <dbl> 75.04315, 70.47602, 130.98218, 154.68529, 75.04315, 127....
+#+end_example
+
+We will use ~cv.glm~ to try various degress /d/ using
+cross-validation.
+
+#+BEGIN_SRC R :results output :exports both
+  constructLRModel <- function(d) {
+    glm(wage~poly(age, d), data=wage)
+  }
+  cvError <- function(model) {
+    cv.glm(wage, model, K=10)
+  }
+
+  set.seed(42)
+  dmax <- 10
+  models <- lapply(1:dmax, constructLRModel)
+  sapply(models, function(model) { return(cvError(model)$delta[2]) })
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 1683.341 1606.022 1600.176 1597.746 1598.684 1598.574 1595.608 1594.370
+:  [9] 1594.770 1593.178
+
+So here /d/ = 4 gives the lowest error. Trying ANOVA:
+
+#+BEGIN_SRC R :results output :exports both
+  ## We need to construct the models again using lm() to work with anova
+  constructLRModelLM <- function(d) {
+    lm(wage~poly(age, d), data=wage)
+  }
+  modelsLM <- lapply(1:dmax, constructLRModelLM)
+  do.call(anova, modelsLM)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Analysis of Variance Table
+
+Model  1: wage ~ poly(age, d)
+Model  2: wage ~ poly(age, d)
+Model  3: wage ~ poly(age, d)
+Model  4: wage ~ poly(age, d)
+Model  5: wage ~ poly(age, d)
+Model  6: wage ~ poly(age, d)
+Model  7: wage ~ poly(age, d)
+Model  8: wage ~ poly(age, d)
+Model  9: wage ~ poly(age, d)
+Model 10: wage ~ poly(age, d)
+   Res.Df     RSS Df Sum of Sq        F    Pr(>F)    
+1    2998 5022216                                    
+2    2997 4793430  1    228786 143.7638 < 2.2e-16 ***
+3    2996 4777674  1     15756   9.9005  0.001669 ** 
+4    2995 4771604  1      6070   3.8143  0.050909 .  
+5    2994 4770322  1      1283   0.8059  0.369398    
+6    2993 4766389  1      3932   2.4709  0.116074    
+7    2992 4763834  1      2555   1.6057  0.205199    
+8    2991 4763707  1       127   0.0796  0.777865    
+9    2990 4756703  1      7004   4.4014  0.035994 *  
+10   2989 4756701  1         3   0.0017  0.967529    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#+end_example
+
+So models with /d/ above 3 are insignificantly different.
+
+Summarising and plotting with /d/ = 3.
+
+#+BEGIN_SRC R :results output :exports both
+  polyModel <- lm(wage ~ poly(age, 3), data=wage)
+  summary(polyModel)
+  deviance(polyModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = wage ~ poly(age, 3), data = wage)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-99.693 -24.562  -5.222  15.096 206.119 
+
+Coefficients:
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)    111.7036     0.7291 153.211  < 2e-16 ***
+poly(age, 3)1  447.0679    39.9335  11.195  < 2e-16 ***
+poly(age, 3)2 -478.3158    39.9335 -11.978  < 2e-16 ***
+poly(age, 3)3  125.5217    39.9335   3.143  0.00169 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 39.93 on 2996 degrees of freedom
+Multiple R-squared:  0.0851,	Adjusted R-squared:  0.08419 
+F-statistic: 92.89 on 3 and 2996 DF,  p-value: < 2.2e-16
+
+[1] 4777674
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q06a_1.png
+  ggplot(wage, aes(x=age, y=wage)) + 
+    geom_point() +
+    stat_smooth(method = "lm", col = "red", formula = y ~ poly(x, 3)) +
+    labs(title = "wage predicted from age using a polynomial model")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q06a_1.png]]
+
+Note the increased error for larger values of age.
+*** (b)
+#+BEGIN_QUOTE
+Fit a step function to predict ~wage~ using ~age~, and perform
+cross-validation to choose the optimal number of cuts. Make a plot of
+the fit obtained.
+#+END_QUOTE
+
+We can use a similar approach as we did with ~poly~, using ~cut~ with
+different values.
+
+#+BEGIN_SRC R :results output :exports both
+  testCutModel <- function(c) {
+    ## cv.glm appears not to work with a cut formula directly, so we add
+    ## it to the data.
+    wageWithAgeCuts <- mutate(wage, ageCut=cut(age, c))
+    model <- glm(wage~ageCut, data=wageWithAgeCuts)
+    return(cv.glm(wageWithAgeCuts, model, K=10)$delta[2])
+  }
+
+  set.seed(42)
+  cmin <- 2
+  cmax <- 10
+  sapply(cmin:cmax, testCutModel)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 1735.152 1682.015 1636.067 1630.690 1624.091 1612.191 1600.119 1608.707
+: [9] 1604.775
+
+The error is minimised with 8 cuts. Let's look at a summary of this
+model and plot it.
+
+#+BEGIN_SRC R :results output :exports both
+  cutModel <- lm(wage ~ cut(age, 8), data=wage)
+  summary(cutModel)
+  deviance(cutModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = wage ~ cut(age, 8), data = wage)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-99.697 -24.552  -5.307  15.417 198.560 
+
+Coefficients:
+                       Estimate Std. Error t value Pr(>|t|)    
+(Intercept)              76.282      2.630  29.007  < 2e-16 ***
+cut(age, 8)(25.8,33.5]   25.833      3.161   8.172 4.44e-16 ***
+cut(age, 8)(33.5,41.2]   40.226      3.049  13.193  < 2e-16 ***
+cut(age, 8)(41.2,49]     43.501      3.018  14.412  < 2e-16 ***
+cut(age, 8)(49,56.8]     40.136      3.177  12.634  < 2e-16 ***
+cut(age, 8)(56.8,64.5]   44.102      3.564  12.373  < 2e-16 ***
+cut(age, 8)(64.5,72.2]   28.948      6.042   4.792 1.74e-06 ***
+cut(age, 8)(72.2,80.1]   15.224      9.781   1.556     0.12    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 39.97 on 2992 degrees of freedom
+Multiple R-squared:  0.08467,	Adjusted R-squared:  0.08253 
+F-statistic: 39.54 on 7 and 2992 DF,  p-value: < 2.2e-16
+
+[1] 4779946
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q06b_1.png
+  ggplot(wage, aes(x=age, y=wage)) + 
+    geom_point() +
+    stat_smooth(method = "lm", col = "red", formula = y ~ cut(x, 8,)) +
+    labs(title = "wage predicted from age using a step model")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q06b_1.png]]
+
+The adjusted /R²/ and deviance (RSS) are similar.
+
+** Question 7
+#+BEGIN_QUOTE
+The ~Wage~ data set contains a number of other features not explored
+in this chapter, such as marital status (~maritl~), job class
+(~jobclass~), and others. Explore the relationships between some of
+these other predictors and ~wage~ , and use non-linear fitting
+techniques in order to fit flexible models to the data. Create plots
+of the results obtained, and write a summary of your findings.
+#+END_QUOTE
+
+Apart from age, year (and logwage which is just a transformation of
+wage), the other variables are categorical. Making boxplots of each:
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch07q07_1.png :width 800
+  wage %>%
+    gather(key="var", value="value", -wage, -logwage, -age, -year) %>%
+    ggplot(aes(y=wage, x=value)) +
+      geom_boxplot() +
+      facet_wrap(~ var, scales="free") +
+      labs(title = "Boxplots of variables against wage")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q07_1.png]]
+
+Higher levels of education seems to have an impact on wages. Health,
+marital status and job description have a lesser impact. As these are
+categorical, I can't see how to use them in non-linear ways. We can
+add these to the polynomial model for age though:
+
+#+BEGIN_SRC R :results output :exports both
+  ageEduModel <- lm(wage ~ poly(age, 4) + education, data=wage)
+  summary(ageEduModel)
+  deviance(ageEduModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = wage ~ poly(age, 4) + education, data = wage)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-114.820  -19.946   -3.004   14.647  214.756 
+
+Coefficients:
+                            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                   85.617      2.158  39.673  < 2e-16 ***
+poly(age, 4)1                362.687     35.472  10.225  < 2e-16 ***
+poly(age, 4)2               -379.816     35.436 -10.718  < 2e-16 ***
+poly(age, 4)3                 74.870     35.315   2.120   0.0341 *  
+poly(age, 4)4                 -5.651     35.373  -0.160   0.8731    
+education2. HS Grad           10.859      2.434   4.461 8.47e-06 ***
+education3. Some College      23.204      2.564   9.051  < 2e-16 ***
+education4. College Grad      37.913      2.549  14.872  < 2e-16 ***
+education5. Advanced Degree   62.592      2.767  22.619  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 35.27 on 2991 degrees of freedom
+Multiple R-squared:  0.2877,	Adjusted R-squared:  0.2858 
+F-statistic:   151 on 8 and 2991 DF,  p-value: < 2.2e-16
+
+[1] 3719777
+#+end_example
+
+This does show a higher adjusted /R²/ and a lower RSS.
+** Question 8
+#+BEGIN_QUOTE
+Fit some of the non-linear models investigated in this chapter to the
+~Auto~ data set. Is there evidence for non-linear relationships in this
+data set? Create some informative plots to justify your answer.
+#+END_QUOTE
+
+We looked at simple linear regression for ~Auto~ in Chapter 3,
+Question 9. Let's investigate ~displacement~ against ~mpg~, as we saw
+then there was a statistically significant relationship between the
+variables, and the plot looks non linear.
+
+First, simple linear regression.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  auto <- as_tibble(Auto) %>% mutate(id = 1:nrow(Auto))
+  autoTrain <- auto %>% sample_frac(0.75)
+  autoTest <- anti_join(auto, autoTrain, by='id')
+  mpgLrModel <- lm(mpg ~ displacement, data=autoTrain)
+
+  calcErrorMSE <- function(predict, actual) {
+    mean((actual - predict)^2)
+  }
+
+  calcErrorMSE(predict(mpgLrModel, autoTest, type='response'),
+               autoTest$mpg)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 17.20946
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q08_1.png
+  ggplot(auto, aes(x=displacement, y=mpg)) + 
+    geom_point() +
+    stat_smooth(method = "lm", col = "red") +
+    labs(title = "mpg predicted from displacement using a simple linear model")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q08_1.png]]
+
+Polynomial:
+
+#+BEGIN_SRC R :results output :exports both
+  trainMpgPolyModel <- function(d) {
+    model <- glm(mpg~poly(displacement, d), data=autoTrain)
+    return(cv.glm(autoTrain, model, K=10)$delta[2])
+  }
+
+  set.seed(42)
+  dmax <- 10
+  sapply(1:dmax, trainMpgPolyModel)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 23.04049 20.55391 20.72650 20.63689 21.10674 20.90644 20.55477 20.32690
+:  [9] 19.86570 18.82356
+
+There's a big jump from /d/ = 1 to 2, and then similar results beyond
+that. Let's check the test error for a couple of these
+
+#+BEGIN_SRC R :results output :exports both
+  for (d in c(2, 10)) {
+    model <- lm(mpg~poly(displacement, d), data=autoTest)
+    print(calcErrorMSE(predict(model, autoTest, type='response'),
+                       autoTest$mpg))
+  }
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 14.13228
+: [1] 11.60243
+
+All of them improve on the basic model; let's look at plot:s
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q08_2.png
+  ggplot(auto, aes(x=displacement, y=mpg)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ poly(x, 2), col = "red") +
+    labs(title = "mpg predicted from displacement using a polynomial linear model, d=2")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q08_2.png]]
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q08_3.png
+  ggplot(auto, aes(x=displacement, y=mpg)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ poly(x, 10), col = "yellow") +
+    labs(title = "mpg predicted from displacement using a polynomial linear model, d=10")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q08_3.png]]
+
+The 10-degree polynomial is very flexible, and although it did better
+on test error than the 2-degree one, the small number of points at
+high values of displacement make this suspect I think.
+
+Let's try a natural spline to ensure linearity at the boundaries.
+Visually there seems to be one knot at around 300, so let's try 2
+degrees of freedom
+
+#+BEGIN_SRC R :results output :exports both
+  model <- lm(mpg~ns(displacement, df=2), data=auto)
+  summary(model)
+  calcErrorMSE(predict(model, auto, type='response'),
+                     auto$mpg)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = mpg ~ ns(displacement, df = 2), data = auto)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-15.3850  -2.3565  -0.3177   2.1249  20.5067 
+
+Coefficients:
+                          Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                33.6114     0.4962   67.74   <2e-16 ***
+ns(displacement, df = 2)1 -30.1316     1.2818  -23.51   <2e-16 ***
+ns(displacement, df = 2)2 -14.3845     1.0485  -13.72   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 4.358 on 389 degrees of freedom
+Multiple R-squared:  0.6899,	Adjusted R-squared:  0.6883 
+F-statistic: 432.6 on 2 and 389 DF,  p-value: < 2.2e-16
+
+[1] 18.84466
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q08_4.png
+  ggplot(auto, aes(x=displacement, y=mpg)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ ns(x, df=2), col = "red") +
+    labs(title = "mpg predicted from displacement using a spline")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q08_4.png]]
+
+Performance is similar but slightly worse compared to the 2 degree
+polynomial.
+** Question 9
+#+BEGIN_QUOTE
+This question uses the variables ~dis~ (the weighted mean of distances
+to five Boston employment centers) and ~nox~ (nitrogen oxides
+concentration in parts per 10 million) from the Boston data. We will
+treat ~dis~ as the predictor and ~nox~ as the response.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Use the ~poly()~ function to fit a cubic polynomial regression to
+predict ~nox~ using ~dis~. Report the regression output, and plot the
+resulting data and polynomial fits.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  boston <- as_tibble(Boston)
+  noxCubicPolyModel <- lm(nox ~ poly(dis, 3), data=boston)
+  summary(noxCubicPolyModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = nox ~ poly(dis, 3), data = boston)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.121130 -0.040619 -0.009738  0.023385  0.194904 
+
+Coefficients:
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)    0.554695   0.002759 201.021  < 2e-16 ***
+poly(dis, 3)1 -2.003096   0.062071 -32.271  < 2e-16 ***
+poly(dis, 3)2  0.856330   0.062071  13.796  < 2e-16 ***
+poly(dis, 3)3 -0.318049   0.062071  -5.124 4.27e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.06207 on 502 degrees of freedom
+Multiple R-squared:  0.7148,	Adjusted R-squared:  0.7131 
+F-statistic: 419.3 on 3 and 502 DF,  p-value: < 2.2e-16
+#+end_example
+
+All polynomial terms are statistically significant to 0.1% and the
+adjusted /R²/ is 0.71. 
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09a_1.png
+  ggplot(boston, aes(x=dis, y=nox)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ poly(x, 3), col = "red") +
+    labs(title = "nox predicted from dis using a cubic polynomial")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09a_1.png]]
+
+This provides a reasonable fit, except at small and large values of
+~dis~.
+*** (b)
+#+BEGIN_QUOTE
+Plot the polynomial fits for a range of different polynomial
+degrees (say, from 1 to 10), and report the associated residual
+sum of squares.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  generatePolyModels <- function(d) {
+    model <- lm(nox~poly(dis, d), data=boston)
+    return(deviance(model))
+  }
+
+  set.seed(42)
+  dmax <- 10
+  sapply(1:dmax, generatePolyModels)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 2.768563 2.035262 1.934107 1.932981 1.915290 1.878257 1.849484 1.835630
+:  [9] 1.833331 1.832171
+
+The RSS decreases as the degree increases. 
+
+Plotting a few of these:
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09b_1.png
+  ggplot(boston, aes(x=dis, y=nox)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ poly(x, 2), col = "red") +
+    labs(title = "nox predicted from dis using a polynomial of degree 2")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09b_1.png]]
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09b_2.png
+  ggplot(boston, aes(x=dis, y=nox)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ poly(x, 5), col = "yellow") +
+    labs(title = "nox predicted from dis using a polynomial of degree 5")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09b_2.png]]
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09b_3.png
+  ggplot(boston, aes(x=dis, y=nox)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ poly(x, 10), col = "green") +
+    labs(title = "nox predicted from dis using a polynomial of degree 10")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09b_3.png]]
+
+The fits get closer to the (training) data points, but with
+increasingly wavy lines and larger variance at the high end of ~dis~.
+*** (c)
+#+BEGIN_QUOTE
+Perform cross-validation or another approach to select the optimal
+degree for the polynomial, and explain your results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  trainNoxPolyModel <- function(d) {
+    model <- glm(nox~poly(dis, d), data=boston)
+    return(cv.glm(boston, model, K=10)$delta[2])
+  }
+
+  set.seed(42)
+  dmax <- 10
+  deltasPoly <- sapply(1:dmax, trainNoxPolyModel)
+  deltasPoly
+  min(deltasPoly)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 0.005536268 0.004087516 0.003880213 0.003853953 0.004093880 0.005160546
+:  [7] 0.008254707 0.007137030 0.014110171 0.007753519
+: 
+: [1] 0.003853953
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09c_1.png
+  cvErrors <- data_frame(d=c(1:dmax), errorsPoly=deltasPoly)
+  ggplot(cvErrors, aes(x=d, y=errorsPoly)) + 
+    geom_line() +
+    labs(title = "CV errors for poly models")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09c_1.png]]
+
+Cross validation has selected /d/ = 4. The errors show the 'U' shaped
+curve we expect as we reduce the bias of the model.
+*** (d)
+#+BEGIN_QUOTE
+Use the ~bs()~ function to fit a regression spline to predict ~nox~
+using ~dis~ . Report the output for the fit using four degrees of
+freedom. How did you choose the knots? Plot the resulting fit.
+#+END_QUOTE
+
+~bs~ can choose the knots automatically for /df/ = 4.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  noxBsModel <- lm(nox ~ bs(dis, df=4), data=boston)
+  summary(noxBsModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = nox ~ bs(dis, df = 4), data = boston)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.124622 -0.039259 -0.008514  0.020850  0.193891 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(>|t|)    
+(Intercept)       0.73447    0.01460  50.306  < 2e-16 ***
+bs(dis, df = 4)1 -0.05810    0.02186  -2.658  0.00812 ** 
+bs(dis, df = 4)2 -0.46356    0.02366 -19.596  < 2e-16 ***
+bs(dis, df = 4)3 -0.19979    0.04311  -4.634 4.58e-06 ***
+bs(dis, df = 4)4 -0.38881    0.04551  -8.544  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.06195 on 501 degrees of freedom
+Multiple R-squared:  0.7164,	Adjusted R-squared:  0.7142 
+F-statistic: 316.5 on 4 and 501 DF,  p-value: < 2.2e-16
+
+[1] 1.922775
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09d_1.png
+  ggplot(boston, aes(x=dis, y=nox)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ bs(x, df=4), col = "red") +
+    labs(title = "nox predicted from dis using a regression spline with df-4")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09d_1.png]]
+
+*** (e)
+#+BEGIN_QUOTE
+Now fit a regression spline for a range of degrees of freedom, and
+plot the resulting fits and report the resulting RSS. Describe the
+results obtained.
+#+END_QUOTE
+
+/df/ < 3 produces errors, so we do from 3 to 12.
+
+#+BEGIN_SRC R :results output :exports both
+  generateBsModels <- function(d) {
+    model <- lm(nox~bs(dis, df=d), data=boston)
+    return(deviance(model))
+  }
+
+  set.seed(42)
+  dmin <- 3
+  dmax <- 12
+  sapply(dmin:dmax, generateBsModels)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 1.934107 1.922775 1.840173 1.833966 1.829884 1.816995 1.825653 1.792535
+:  [9] 1.796992 1.788999
+
+The RSS decreases as the degrees of freedom increases
+
+Plotting a few of these:
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09e_1.png
+  ggplot(boston, aes(x=dis, y=nox)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ bs(x, df=5), col = "red") +
+    labs(title = "nox predicted from dis using a regression spline, df=5")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09e_1.png]]
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09e_2.png
+  ggplot(boston, aes(x=dis, y=nox)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ bs(x, df=9), col = "yellow") +
+    labs(title = "nox predicted from dis using a regression spline, df=9")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09e_2.png]]
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch07q09e_3.png
+  ggplot(boston, aes(x=dis, y=nox)) + 
+    geom_point() +
+    stat_smooth(method = "lm", formula = y ~ bs(x, df=13), col = "green") +
+    labs(title = "nox predicted from dis using a regression spline, df=13")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch07q09e_3.png]]
+
+We see similar results to increasing the degree of a polynomial model.
+*** (f)
+#+BEGIN_QUOTE
+Perform cross-validation or another approach in order to select
+the best degrees of freedom for a regression spline on this data.
+Describe your results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  trainNoxBsModel <- function(d) {
+    model <- glm(nox~bs(dis, df=d), data=boston)
+    return(cv.glm(boston, model, K=10)$delta[2])
+  }
+
+  set.seed(42)
+  deltasBs <- sapply(dmin:dmax, trainNoxBsModel)
+  deltasBs
+  min(deltasBs)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: There were 40 warnings (use warnings() to see them)
+: 
+:  [1] 0.003879131 0.003900493 0.003719866 0.003679882 0.003681172 0.003680765
+:  [7] 0.003745637 0.003717308 0.003677614 0.003722493
+: 
+: [1] 0.003677614
+
+The warnings mentioned are of the form 
+
+#+begin_example
+some 'x' values beyond boundary knots may cause ill-conditioned bases
+#+end_example
+
+so although the results for /df/ = 12 are the best, the differences
+are minimal from /df/ = 4.
+** Question 10
+#+BEGIN_QUOTE
+This question relates to the ~College~ data set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Split the data into a training set and a test set. Using out-of-state
+tuition as the response and the other variables as the predictors,
+perform forward stepwise selection on the training set in order to
+identify a satisfactory model that uses just a subset of the
+predictors.
+#+END_QUOTE
+
+Using ~regsubsets~ to construct models.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  college <- as_tibble(College) %>% mutate(id = 1:nrow(College))
+  collegeTrain <- college %>% sample_frac(0.75)
+  collegeTest <- anti_join(college, collegeTrain, by='id')
+
+  outStateForwardModel <- regsubsets(Outstate~., data=collegeTrain, nvmax=18,
+                                     method="forward")
+  outStateForwardSummary <- summary(outStateForwardModel)
+  outStateForwardSummary
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Subset selection object
+Call: regsubsets.formula(Outstate ~ ., data = collegeTrain, nvmax = 18, 
+    method = "forward")
+18 Variables  (and intercept)
+            Forced in Forced out
+PrivateYes      FALSE      FALSE
+Apps            FALSE      FALSE
+Accept          FALSE      FALSE
+Enroll          FALSE      FALSE
+Top10perc       FALSE      FALSE
+Top25perc       FALSE      FALSE
+F.Undergrad     FALSE      FALSE
+P.Undergrad     FALSE      FALSE
+Room.Board      FALSE      FALSE
+Books           FALSE      FALSE
+Personal        FALSE      FALSE
+PhD             FALSE      FALSE
+Terminal        FALSE      FALSE
+S.F.Ratio       FALSE      FALSE
+perc.alumni     FALSE      FALSE
+Expend          FALSE      FALSE
+Grad.Rate       FALSE      FALSE
+id              FALSE      FALSE
+1 subsets of each size up to 18
+Selection Algorithm: forward
+          PrivateYes Apps Accept Enroll Top10perc Top25perc F.Undergrad
+1  ( 1 )  " "        " "  " "    " "    " "       " "       " "        
+2  ( 1 )  "*"        " "  " "    " "    " "       " "       " "        
+3  ( 1 )  "*"        " "  " "    " "    " "       " "       " "        
+4  ( 1 )  "*"        " "  " "    " "    " "       " "       " "        
+5  ( 1 )  "*"        " "  " "    " "    " "       " "       " "        
+6  ( 1 )  "*"        " "  " "    " "    " "       " "       " "        
+7  ( 1 )  "*"        " "  " "    " "    " "       " "       " "        
+8  ( 1 )  "*"        " "  " "    " "    " "       " "       " "        
+9  ( 1 )  "*"        " "  " "    " "    " "       " "       " "        
+10  ( 1 ) "*"        " "  " "    " "    " "       " "       " "        
+11  ( 1 ) "*"        " "  "*"    " "    " "       " "       " "        
+12  ( 1 ) "*"        " "  "*"    "*"    " "       " "       " "        
+13  ( 1 ) "*"        "*"  "*"    "*"    " "       " "       " "        
+14  ( 1 ) "*"        "*"  "*"    "*"    "*"       " "       " "        
+15  ( 1 ) "*"        "*"  "*"    "*"    "*"       " "       " "        
+16  ( 1 ) "*"        "*"  "*"    "*"    "*"       " "       " "        
+17  ( 1 ) "*"        "*"  "*"    "*"    "*"       "*"       " "        
+18  ( 1 ) "*"        "*"  "*"    "*"    "*"       "*"       "*"        
+          P.Undergrad Room.Board Books Personal PhD Terminal S.F.Ratio
+1  ( 1 )  " "         " "        " "   " "      " " " "      " "      
+2  ( 1 )  " "         " "        " "   " "      " " " "      " "      
+3  ( 1 )  " "         "*"        " "   " "      " " " "      " "      
+4  ( 1 )  " "         "*"        " "   " "      " " " "      " "      
+5  ( 1 )  " "         "*"        " "   " "      "*" " "      " "      
+6  ( 1 )  " "         "*"        " "   " "      "*" " "      " "      
+7  ( 1 )  " "         "*"        " "   "*"      "*" " "      " "      
+8  ( 1 )  " "         "*"        " "   "*"      "*" " "      "*"      
+9  ( 1 )  " "         "*"        " "   "*"      "*" "*"      "*"      
+10  ( 1 ) "*"         "*"        " "   "*"      "*" "*"      "*"      
+11  ( 1 ) "*"         "*"        " "   "*"      "*" "*"      "*"      
+12  ( 1 ) "*"         "*"        " "   "*"      "*" "*"      "*"      
+13  ( 1 ) "*"         "*"        " "   "*"      "*" "*"      "*"      
+14  ( 1 ) "*"         "*"        " "   "*"      "*" "*"      "*"      
+15  ( 1 ) "*"         "*"        "*"   "*"      "*" "*"      "*"      
+16  ( 1 ) "*"         "*"        "*"   "*"      "*" "*"      "*"      
+17  ( 1 ) "*"         "*"        "*"   "*"      "*" "*"      "*"      
+18  ( 1 ) "*"         "*"        "*"   "*"      "*" "*"      "*"      
+          perc.alumni Expend Grad.Rate id 
+1  ( 1 )  " "         "*"    " "       " "
+2  ( 1 )  " "         "*"    " "       " "
+3  ( 1 )  " "         "*"    " "       " "
+4  ( 1 )  "*"         "*"    " "       " "
+5  ( 1 )  "*"         "*"    " "       " "
+6  ( 1 )  "*"         "*"    "*"       " "
+7  ( 1 )  "*"         "*"    "*"       " "
+8  ( 1 )  "*"         "*"    "*"       " "
+9  ( 1 )  "*"         "*"    "*"       " "
+10  ( 1 ) "*"         "*"    "*"       " "
+11  ( 1 ) "*"         "*"    "*"       " "
+12  ( 1 ) "*"         "*"    "*"       " "
+13  ( 1 ) "*"         "*"    "*"       " "
+14  ( 1 ) "*"         "*"    "*"       " "
+15  ( 1 ) "*"         "*"    "*"       " "
+16  ( 1 ) "*"         "*"    "*"       "*"
+17  ( 1 ) "*"         "*"    "*"       "*"
+18  ( 1 ) "*"         "*"    "*"       "*"
+#+end_example
+
+Plot diagnostics for each
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch07q10a_1.png
+  plotMetrics <- function(summary, p, title) {
+    m <- c(1:p)
+    metrics <- data_frame(m=m,
+                          adjr2=summary$adjr2, 
+                          cp=summary$cp,
+                          rss=summary$rss,
+                          bic=summary$bic) %>%
+      gather(metric, value, -m)
+    ggplot(metrics, aes(x=m, y=value)) +
+      geom_line() +
+      scale_x_continuous(breaks=m) +
+      facet_wrap(scale="free", ~metric) +
+      labs(title=title)
+  }
+
+  plotMetrics(outStateForwardSummary, 18, 
+              "Model metrics for out-of-state tuition")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch07q10a_1.png]]
+
+We get good results at /p/ = 6. 
+
+#+BEGIN_SRC R :results output :exports both
+  coef(outStateForwardModel, 6)
+#+END_SRC 
+
+#+RESULTS:
+:   (Intercept)    PrivateYes    Room.Board           PhD   perc.alumni 
+: -3945.4876978  2782.2422260     1.0082727    39.0608542    52.7265747 
+:        Expend     Grad.Rate 
+:     0.1911862    32.1551861
+
+*** (b)
+#+BEGIN_QUOTE
+Fit a GAM on the training data, using out-of-state tuition as the
+response and the features selected in the previous step as the
+predictors. Plot the results, and explain your findings.
+#+END_QUOTE
+
+~Private~ is categorical. We can try smoothing splines with /df/ = 3
+for the rest.
+
+#+BEGIN_SRC R :results output :exports both
+  outStateGam <- gam(Outstate ~ s(Room.Board, df=3) + s(PhD, df=3) +
+                       s(perc.alumni, df=3) + s(Expend, df=3) +
+                       s(Grad.Rate, df=3) + Private, data=collegeTrain)
+  summary(outStateGam)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call: gam(formula = Outstate ~ s(Room.Board, df = 3) + s(PhD, df = 3) + 
+    s(perc.alumni, df = 3) + s(Expend, df = 3) + s(Grad.Rate, 
+    df = 3) + Private, data = collegeTrain)
+Deviance Residuals:
+     Min       1Q   Median       3Q      Max 
+-7046.95 -1057.43    55.18  1233.30  8310.70 
+
+(Dispersion Parameter for gaussian family taken to be 3512072)
+
+    Null Deviance: 9502288724 on 582 degrees of freedom
+Residual Deviance: 1987832167 on 565.9998 degrees of freedom
+AIC: 10460.04 
+
+Number of Local Scoring Iterations: 2 
+
+Anova for Parametric Effects
+                        Df     Sum Sq    Mean Sq F value    Pr(>F)    
+s(Room.Board, df = 3)    1 3332904917 3332904917 948.985 < 2.2e-16 ***
+s(PhD, df = 3)           1  227274087  227274087  64.712 5.106e-15 ***
+s(perc.alumni, df = 3)   1 1216308763 1216308763 346.322 < 2.2e-16 ***
+s(Expend, df = 3)        1  835980895  835980895 238.031 < 2.2e-16 ***
+s(Grad.Rate, df = 3)     1  225367443  225367443  64.169 6.539e-15 ***
+Private                  1  466361907  466361907 132.788 < 2.2e-16 ***
+Residuals              566 1987832167    3512072                      
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Anova for Nonparametric Effects
+                       Npar Df Npar F   Pr(F)    
+(Intercept)                                      
+s(Room.Board, df = 3)        2  1.416 0.24346    
+s(PhD, df = 3)               2  1.994 0.13713    
+s(perc.alumni, df = 3)       2  0.330 0.71908    
+s(Expend, df = 3)            2 46.917 < 2e-16 ***
+s(Grad.Rate, df = 3)         2  3.061 0.04764 *  
+Private                                          
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch07q10b_1.png :width 800
+  par(mfrow=c(2,3))
+  plot(outStateGam , se=TRUE, col="blue")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch07q10b_1.png]]
+
+The first three terms look more linear, let's compare a simpler model.
+
+#+BEGIN_SRC R :results output :exports both
+  outStateGam2 <- gam(Outstate ~ Room.Board + PhD + 
+                       perc.alumni + s(Expend, df=3) + 
+                       s(Grad.Rate, df=3) + Private, data=collegeTrain)
+  summary(outStateGam2)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call: gam(formula = Outstate ~ Room.Board + PhD + perc.alumni + s(Expend, 
+    df = 3) + s(Grad.Rate, df = 3) + Private, data = collegeTrain)
+Deviance Residuals:
+      Min        1Q    Median        3Q       Max 
+-7105.394 -1115.684    -8.921  1240.107  8589.487 
+
+(Dispersion Parameter for gaussian family taken to be 3517471)
+
+    Null Deviance: 9502288724 on 582 degrees of freedom
+Residual Deviance: 2011993557 on 572 degrees of freedom
+AIC: 10455.08 
+
+Number of Local Scoring Iterations: 2 
+
+Anova for Parametric Effects
+                      Df     Sum Sq    Mean Sq F value    Pr(>F)    
+Room.Board             1 3356105830 3356105830 954.125 < 2.2e-16 ***
+PhD                    1  222197821  222197821  63.170 1.015e-14 ***
+perc.alumni            1 1227971978 1227971978 349.106 < 2.2e-16 ***
+s(Expend, df = 3)      1  842979266  842979266 239.655 < 2.2e-16 ***
+s(Grad.Rate, df = 3)   1  230889244  230889244  65.641 3.288e-15 ***
+Private                1  455955329  455955329 129.626 < 2.2e-16 ***
+Residuals            572 2011993557    3517471                      
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Anova for Nonparametric Effects
+                     Npar Df Npar F   Pr(F)    
+(Intercept)                                    
+Room.Board                                     
+PhD                                            
+perc.alumni                                    
+s(Expend, df = 3)          2 49.570 < 2e-16 ***
+s(Grad.Rate, df = 3)       2  3.055 0.04791 *  
+Private                                        
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch07q10b_2.png :width 800
+  par(mfrow=c(2,3))
+  plot(outStateGam2 , se=TRUE, col="blue")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch07q10b_2.png]]
+
+#+BEGIN_SRC R :results output :exports both
+  anova(outStateGam2, outStateGam)
+#+END_SRC 
+
+#+RESULTS:
+: Analysis of Deviance Table
+: 
+: Model 1: Outstate ~ Room.Board + PhD + perc.alumni + s(Expend, df = 3) + 
+:     s(Grad.Rate, df = 3) + Private
+: Model 2: Outstate ~ s(Room.Board, df = 3) + s(PhD, df = 3) + s(perc.alumni, 
+:     df = 3) + s(Expend, df = 3) + s(Grad.Rate, df = 3) + Private
+:   Resid. Df Resid. Dev     Df Deviance Pr(>Chi)
+: 1       572 2011993557                         
+: 2       566 1987832167 6.0002 24161389   0.3322
+
+The ANOVA test appears to support that.
+*** (c)
+#+BEGIN_QUOTE
+Evaluate the model obtained on the test set, and explain the
+results obtained.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  outStateLm <- lm(Outstate ~ Room.Board + PhD + perc.alumni + Expend +
+                     Grad.Rate + Private, data=collegeTrain)
+  calcErrorMSE(predict(outStateLm, collegeTest, type='response'),
+               collegeTest$Outstate)
+  calcErrorMSE(predict(outStateGam, collegeTest, type='response'),
+               collegeTest$Outstate)
+  calcErrorMSE(predict(outStateGam2, collegeTest, type='response'),
+               collegeTest$Outstate)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 4110843
+: 
+: [1] 3616867
+: 
+: [1] 3676988
+
+So here the GAM outperforms the regular linear model. The two GAMs
+give close results.
+*** (d)
+#+BEGIN_QUOTE
+For which variables, if any, is there evidence of a non-linear
+relationship with the response?
+#+END_QUOTE
+
+~Expend~ and ~Grad.Rate~.
+** Question 11
+#+BEGIN_QUOTE
+In Section 7.7, it was mentioned that GAMs are generally fit using
+a /backfitting/ approach. The idea behind backfitting is actually quite
+simple. We will now explore backfitting in the context of multiple
+linear regression.
+
+Suppose that we would like to perform multiple linear regression, but
+we do not have software to do so. Instead, we only have software to
+perform simple linear regression. Therefore, we take the following
+iterative approach: we repeatedly hold all but one coefficient
+estimate fixed at its current value, and update only that coefficient
+estimate using a simple linear regression. The process is continued
+until /convergence/ - that is, until the coefficient estimates stop
+changing. We now try this out on a toy example
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Generate a response /Y/ and two predictors /X₁/ and /X₂/ , with /n/
+= 100.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  n = 100
+  simData <- data_frame(X1=rnorm(n), X2=rnorm(n), eps=rnorm(n, sd=0.1),
+                        Y=11 + 2*X1 + 3*X2 + eps)
+  glimpse(simData)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Observations: 100
+: Variables: 4
+: $ X1  <dbl> 1.37095845, -0.56469817, 0.36312841, 0.63286260, 0.40426832, -0...
+: $ X2  <dbl> 1.200965376, 1.044751087, -1.003208647, 1.848481902, -0.6667734...
+: $ eps <dbl> -0.200092924, 0.033377720, 0.117132513, 0.205953924, -0.1376861...
+: $ Y   <dbl> 17.144720, 13.038235, 8.833763, 18.017125, 9.670530, 10.989207,...
+
+*** (b)
+#+BEGIN_QUOTE
+Initialize /β̂₁/ to take on a value of your choice. It does not matter
+what value you choose.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results none :exports code
+  B1 = 42
+#+END_SRC 
+
+*** (c)
+#+BEGIN_QUOTE
+Keeping /β̂₁/ fixed, fit the model
+
+/Y − β̂₁X₁ = β₀ + β₂X₂ + ε/
+
+You can do this as follows:
+
+~> a=y-beta1*x1~
+~> beta2=lm(a∼x2)$coef[2]~
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  a <- simData$Y - B1*simData$X1
+  B2 <- lm(a~simData$X2)$coef[2]
+  B2
+#+END_SRC 
+
+#+RESULTS:
+: 
+: simData$X2 
+:   1.566984
+
+*** (d)
+#+BEGIN_QUOTE
+Keeping /β̂₂/ fixed, fit the model
+/Y − β₂X₂ = β₀ + β̂₁X₁ + ε/
+
+You can do this as follows:
+~> a=y-beta2*x2~
+~> beta1=lm(a∼x1)$coef[2]~
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  a <- simData$Y - B2*simData$X2
+  B1 <- lm(a~simData$X1)$coef[2]
+  B1
+  B0 <- lm(a~simData$X1)$coef[1]
+  B0
+#+END_SRC 
+
+#+RESULTS:
+: 
+: simData$X1 
+:    2.02478
+: 
+: (Intercept) 
+:    10.87279
+
+*** (e)
+#+BEGIN_QUOTE
+Write a for loop to repeat (c) and (d) 1,000 times. Report the
+estimates of /β̂₀/, /β̂₁/, and /β̂₂/ at each iteration of the for loop.
+Create a plot in which each of these values is displayed, with /β̂₀/,
+/β̂₁/, and /β̂₂/ each shown in a different color.
+#+END_QUOTE
+
+This actually converges very quickly:
+
+#+BEGIN_SRC R :results output :exports both
+  B1 <- 42
+  for (i in 1:10) {
+    a <- simData$Y - B1*simData$X1
+    B2 <- lm(a~simData$X2)$coef[2]
+    a <- simData$Y - B2*simData$X2
+    B1 <- lm(a~simData$X1)$coef[2]
+    B0 <- lm(a~simData$X1)$coef[1]
+    cat(sprintf("i %i B0 %f B1 %f B2 %f\n", i, B0, B1, B2))
+  }
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+i 1 B0 10.872792 B1 2.024780 B2 1.566984
+i 2 B0 11.000052 B1 1.985667 B2 3.007119
+i 3 B0 11.000177 B1 1.985629 B2 3.008528
+i 4 B0 11.000177 B1 1.985629 B2 3.008529
+i 5 B0 11.000177 B1 1.985629 B2 3.008529
+i 6 B0 11.000177 B1 1.985629 B2 3.008529
+i 7 B0 11.000177 B1 1.985629 B2 3.008529
+i 8 B0 11.000177 B1 1.985629 B2 3.008529
+i 9 B0 11.000177 B1 1.985629 B2 3.008529
+i 10 B0 11.000177 B1 1.985629 B2 3.008529
+#+end_example
+
+*** (f)
+#+BEGIN_QUOTE
+Compare your answer in (e) to the results of simply performing
+multiple linear regression to predict /Y/ using /X₁/ and /X₂/ . Use
+the ~abline()~ function to overlay those multiple linear regression
+coefficient estimates on the plot obtained in (e).
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  summary(lm(Y~X1+X2, data=simData))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Y ~ X1 + X2, data = simData)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.257662 -0.066188 -0.008253  0.063706  0.252057 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 11.000177   0.010190  1079.5   <2e-16 ***
+X1           1.985629   0.009788   202.9   <2e-16 ***
+X2           3.008529   0.011273   266.9   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.1014 on 97 degrees of freedom
+Multiple R-squared:  0.9992,	Adjusted R-squared:  0.9991 
+F-statistic: 5.794e+04 on 2 and 97 DF,  p-value: < 2.2e-16
+#+end_example
+
+We get identical estimates of coefficients.
+*** (g)
+#+BEGIN_QUOTE
+On this data set, how many backfitting iterations were required in
+order to obtain a “good” approximation to the multiple regression
+coefficient estimates?
+#+END_QUOTE
+
+In this case, we got to within 1dp after 2 iterations.
+** Question 12
+#+BEGIN_QUOTE
+This problem is a continuation of the previous exercise. In a toy
+example with /p/ = 100, show that one can approximate the multiple
+linear regression coefficient estimates by repeatedly performing simple
+linear regression in a backfitting procedure. How many backfitting
+iterations are required in order to obtain a “good” approximation to
+the multiple regression coefficient estimates? Create a plot to justify
+your answer.
+#+END_QUOTE
+
+Skipped.
