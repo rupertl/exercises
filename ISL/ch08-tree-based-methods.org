@@ -1,0 +1,1369 @@
+#+TITLE: Introduction to Statistical Learning, Chapter 8: Tree-Based Methods
+#+AUTHOR: Rupert Lane
+#+EMAIL: rupert@rupert-lane.org
+#+PROPERTY: header-args:R :session *R*
+#+STARTUP: inlineimages
+#+STARTUP: latexpreview
+* Conceptual
+#+BEGIN_SRC R :exports code :results none
+  library(tidyverse)
+  library(ggplot2)
+  library(ISLR)
+  library(randomForest)
+  library(MASS)
+  library(reshape2)
+  library(tree)
+  library(gbm)
+  library(leaps)
+
+  options(crayon.enabled = FALSE)
+#+END_SRC
+** Question 1
+#+BEGIN_QUOTE
+Draw an example (of your own invention) of a partition of two-
+dimensional feature space that could result from recursive binary
+splitting. Your example should contain at least six regions. Draw a
+decision tree corresponding to this partition. Be sure to label all
+aspects of your figures, including the regions /R₁/, /R₂/, ..., the
+cutpoints /t₁/, /t₂/, ..., and so forth.
+
+/Hint: Your result should look something like Figures 8.1 and 8.2./
+#+END_QUOTE
+
+The features space:
+
+[[file:img/ch08q01_1.png]]
+
+The tree:
+
+[[file:img/ch08q01_2.png]]
+
+** Question 2
+Skipped.
+#+END_QUOTE
+** Question 3
+#+BEGIN_QUOTE
+Consider the Gini index, classification error, and entropy in a simple
+classification setting with two classes. Create a single plot that
+displays each of these quantities as a function of /p̂_m1/. The
+/x/-axis should display /p̂_m1/ , ranging from 0 to 1, and the /y/-axis
+should display the value of the Gini index, classification error, and
+entropy.
+
+/Hint: In a setting with two classes, p̂_m1 = 1 − p̂_m2 . You could make
+this plot by hand, but it will be much easier to make in R ./
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q03.png
+  measures <- data_frame(pm1=seq(0, 1, 0.01),
+                         classError=1-ifelse(pm1 > 1-pm1, pm1, 1-pm1),
+                         gini=2 * pm1 * (1 - pm1),
+                         entropy=-(pm1 * log(pm1) + (1-pm1)*log(1-pm1)))
+  ggplot(measures) + 
+    geom_line(aes(x=pm1, y=classError, colour='classError')) +
+    geom_line(aes(x=pm1, y=gini, colour='gini')) +
+    geom_line(aes(x=pm1, y=entropy, colour='entropy')) +
+    labs(title = "Various classification measures of error")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch08q03.png]]
+** Question 4
+#+BEGIN_QUOTE
+This question relates to the plots in Figure 8.12.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Sketch the tree corresponding to the partition of the predictor space
+illustrated in the left-hand panel of Figure 8.12. The numbers inside
+the boxes indicate the mean of /Y/ within each region.
+#+END_QUOTE
+
+[[file:img/ch08q04a.png]]
+*** (b)
+#+BEGIN_QUOTE
+Create a diagram similar to the left-hand panel of Figure 8.12, using
+the tree illustrated in the right-hand panel of the same figure. You
+should divide up the predictor space into the correct regions, and
+indicate the mean for each region.
+#+END_QUOTE
+
+[[file:img/ch08q04b.png]]
+
+** Question 5
+#+BEGIN_QUOTE
+Suppose we produce ten bootstrapped samples from a data set containing
+red and green classes. We then apply a classification tree to each
+bootstrapped sample and, for a specific value of /X/, produce 10
+estimates of /P/ (Class is Red | /X/):
+
+0.1, 0.15, 0.2, 0.2, 0.55, 0.6, 0.6, 0.65, 0.7, and 0.75.
+
+There are two common ways to combine these results together into a
+single class prediction. One is the majority vote approach discussed
+in this chapter. The second approach is to classify based on the
+average probability. In this example, what is the final classification
+under each of these two approaches?
+#+END_QUOTE
+
+For majority vote, we see that 4 samples give an estimate less than
+0.5 and 6 greater than 0.5, so we classify as red.
+
+For average probability, the mean of the samples is 0.45, so we'd
+classify as green.
+** Question 6
+#+BEGIN_QUOTE
+Provide a detailed explanation of the algorithm that is used to fit a
+regression tree.
+#+END_QUOTE
+Build a large initial tree by recursively splitting the data, stopping
+when a terminal node would have fewer than a certain number of
+observations. 
+
+We then need to prune the tree based on the equation in 8.4. The
+tuning parameter /α/ is decided by using /K/-fold cross validation,
+looking at the average MSE for the left out data.
+
+Based on this value of /α/, we return the appropriate pruned tree.
+* Applied
+** Question 7
+#+BEGIN_QUOTE
+In the lab, we applied random forests to the ~Boston~ data using
+~mtry=6~ and using ~ntree=25~ and ~ntree=500~ . Create a plot
+displaying the test error resulting from random forests on this data
+set for a more comprehensive range of values for ~mtry~ and ~ntree~ .
+You can model your plot after Figure 8.10. Describe the results
+obtained.
+#+END_QUOTE
+
+Let's set up the data and a function to calculate test error for a
+given value of ~mtry~ and ~ntrees~
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  boston <- as_tibble(Boston) %>% mutate(id = 1:nrow(Boston))
+  bostonTrain <- boston %>% sample_frac(0.75)
+  bostonTest <- anti_join(boston, bostonTrain, by='id')
+
+  calcErrorMSE <- function(predict, actual) {
+    mean((actual - predict)^2)
+  }
+
+  bostonRfTestError <- function(try, trees) {
+    model <- randomForest(medv ~ .-id, data=bostonTrain,
+                          mtry=try, ntree=trees, importance=TRUE)
+    predicted <- predict(model, newdata=bostonTest)
+    calcErrorMSE(predicted, bostonTest$medv)
+  }
+
+  bostonRfTestError(6, 25)
+  bostonRfTestError(6, 500)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 12.36075
+: 
+: [1] 10.1167
+
+Calculate errors for different values.
+
+#+BEGIN_SRC R :results output :exports both
+  rfs <- data_frame(trees=c(1, 5, 10, 25, 50, 100, 250, 500),
+                    try_13=sapply(trees, partial(bostonRfTestError, try=13)),
+                    try_8=sapply(trees, partial(bostonRfTestError, try=8)),
+                    try_6=sapply(trees, partial(bostonRfTestError, try=6)),
+                    try_3=sapply(trees, partial(bostonRfTestError, try=3)))
+  rfs
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 8 x 5
+  trees try_13 try_8 try_6 try_3
+  <dbl>  <dbl> <dbl> <dbl> <dbl>
+1     1  29.9  35.3  29.2   33.2
+2     5  12.1  14.3  16.2   13.8
+3    10  13.8  10.0  11.3   17.5
+4    25   9.51 10.4   9.89  12.2
+5    50   8.25  9.26 10.1   12.3
+6   100   7.95  8.98 11.2   12.4
+7   250   8.23 10.1  10.1   11.9
+8   500   8.36  9.74 10.2   12.2
+#+end_example
+
+And plot:
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q07_1.png
+  rfsMelted <- melt(rfs, id.var='trees')
+  ggplot(rfsMelted, aes(x=trees, y=value, col=variable)) + 
+    geom_line() +
+    coord_cartesian(ylim = c(0, 20)) +
+    labs(title = "Test errors for ntrees and mtry on the Boston data set")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch08q07_1.png]]
+
+The error starts large (off the plot here) for small numbers of trees
+but stabilises at around 200. A larger number of variables tried
+produces better results.
+** Question 8
+#+BEGIN_QUOTE
+In the lab, a classification tree was applied to the ~Carseats~ data
+set after converting ~Sales~ into a qualitative response variable. Now
+we will seek to predict ~Sales~ using regression trees and related
+approaches, treating the response as a quantitative variable.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Split the data set into a training set and a test set.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  carseats <- as_tibble(Carseats) %>% mutate(id = 1:nrow(Carseats))
+  carseatsTrain <- carseats %>% sample_frac(0.75)
+  carseatsTest <- anti_join(carseats, carseatsTrain, by='id')
+  glimpse(carseatsTrain)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Observations: 300
+Variables: 12
+$ Sales       <dbl> 6.53, 5.58, 6.01, 11.27, 9.58, 5.68, 9.49, 7.91, 8.67, ...
+$ CompPrice   <dbl> 154, 137, 131, 100, 108, 113, 107, 153, 125, 107, 104, ...
+$ Income      <dbl> 30, 71, 29, 54, 104, 22, 111, 40, 62, 119, 71, 57, 55, ...
+$ Advertising <dbl> 0, 0, 11, 9, 23, 1, 14, 3, 14, 11, 14, 13, 0, 24, 8, 10...
+$ Population  <dbl> 122, 402, 335, 433, 353, 317, 400, 112, 477, 210, 89, 3...
+$ Price       <dbl> 162, 116, 127, 89, 129, 132, 103, 129, 112, 132, 81, 15...
+$ ShelveLoc   <fct> Medium, Medium, Bad, Good, Good, Medium, Medium, Bad, M...
+$ Age         <dbl> 57, 78, 33, 45, 37, 28, 41, 39, 80, 53, 25, 64, 79, 36,...
+$ Education   <dbl> 17, 17, 12, 12, 17, 12, 11, 18, 13, 11, 14, 18, 12, 16,...
+$ Urban       <fct> No, Yes, Yes, Yes, Yes, Yes, No, Yes, Yes, Yes, No, Yes...
+$ US          <fct> No, No, Yes, Yes, Yes, No, Yes, Yes, Yes, Yes, Yes, Yes...
+$ id          <int> 366, 374, 114, 330, 255, 206, 291, 53, 258, 276, 179, 2...
+#+end_example
+
+*** (b)
+#+BEGIN_QUOTE
+Fit a regression tree to the training set. Plot the tree, and
+interpret the results. What test MSE do you obtain?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  carseatsTree <- tree(Sales ~ . -id, data=carseatsTrain)
+  summary(carseatsTree)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Regression tree:
+tree(formula = Sales ~ . - id, data = carseatsTrain)
+Variables actually used in tree construction:
+[1] "ShelveLoc"   "Price"       "CompPrice"   "Age"         "Income"     
+[6] "Advertising"
+Number of terminal nodes:  16 
+Residual mean deviance:  2.558 = 726.5 / 284 
+Distribution of residuals:
+     Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+-3.972000 -1.079000  0.000412  0.000000  1.094000  4.141000
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q08b.png
+  plot(carseatsTree)
+  text(carseatsTree, pretty=0)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch08q08b.png]]
+
+The tree has 16 terminal nodes, with about 5 splits needed to get an
+answer. ~ShelveLoc~ is the most important predictor.
+
+Mean square error: 
+
+#+BEGIN_SRC R :results output :exports both
+  carseatsTreePredict <- predict(carseatsTree, newdata=carseatsTest)
+  calcErrorMSE(carseatsTreePredict, carseatsTest$Sales)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 4.287795
+
+*** (c)
+#+BEGIN_QUOTE
+Use cross-validation in order to determine the optimal level of
+tree complexity. Does pruning the tree improve the test MSE?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+set.seed(42)
+carseatsCV <- cv.tree(carseatsTree)
+carseatsCV
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+$size
+ [1] 16 15 14 13 12 10  9  8  7  6  5  4  3  2  1
+
+$dev
+ [1] 1437.041 1430.209 1424.271 1422.516 1417.601 1391.292 1384.536 1360.648
+ [9] 1369.597 1393.437 1628.140 1628.999 1595.215 1742.396 2353.368
+
+$k
+ [1]      -Inf  23.17187  26.32807  34.86629  37.76165  41.05822  42.85743
+ [8]  54.24693  57.13933  71.65234 101.48869 104.10365 125.61164 224.07153
+[15] 601.68673
+
+$method
+[1] "deviance"
+
+attr(,"class")
+[1] "prune"         "tree.sequence"
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q08c_1.png :width 800
+  par(mfrow=c(1,2))
+  plot(carseatsCV$size, carseatsCV$dev, type="b")
+  plot(carseatsCV$k, carseatsCV$dev, type="b")
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch08q08c_1.png]]
+
+A tree of size 8 produces the lowest CV error.
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q08c_2.png
+  carseatsPruned <- prune.tree(carseatsTree, best=8)
+  plot(carseatsPruned)
+  text(carseatsPruned, pretty=0)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch08q08c_2.png]]
+
+#+BEGIN_SRC R :results output :exports both
+  carseatsPrunedPredict <- predict(carseatsPruned, newdata=carseatsTest)
+  calcErrorMSE(carseatsPrunedPredict, carseatsTest$Sales)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 4.715244
+
+The MSE is slightly higher here.
+*** (d)
+#+BEGIN_QUOTE
+Use the bagging approach in order to analyze this data. What test MSE
+do you obtain? Use the ~importance()~ function to determine which
+variables are most important.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  carseatsBagModel <- randomForest(Sales ~ . -id, data=carseatsTrain, 
+                                   mtry=10, ntree=500, importance=T)
+  carseatsBagPredict <- predict(carseatsBagModel, carseatsTest)
+  calcErrorMSE(carseatsBagPredict, carseatsTest$Sales)
+  importance(carseatsBagModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[1] 2.469383
+
+                 %IncMSE IncNodePurity
+CompPrice   32.867897711     228.25018
+Income      12.211856207     139.37077
+Advertising 22.038696428     159.36900
+Population   0.008282543      79.43537
+Price       71.825850006     634.62895
+ShelveLoc   76.752361128     730.42002
+Age         21.304133019     207.43491
+Education    0.676542423      52.36637
+Urban       -0.087844859      13.36026
+US           3.299764065      11.13920
+#+end_example
+
+MSE has now dropped by around 45%. We can see ~ShelveLoc~ is still the
+most important factor.
+*** (e)
+#+BEGIN_QUOTE
+Use random forests to analyze this data. What test MSE do you obtain?
+Use the ~importance()~ function to determine which variables are most
+important. Describe the effect of /m/, the number of variables
+considered at each split, on the error rate obtained.
+#+END_QUOTE
+
+Trying /m/ = 5 and 3:
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  carseatsRfModel5 <- randomForest(Sales ~ . -id, data=carseatsTrain, 
+                                   mtry=5, ntree=500, importance=T)
+  carseatsRfPredict5 <- predict(carseatsRfModel5, carseatsTest)
+  calcErrorMSE(carseatsRfPredict5, carseatsTest$Sales)
+  importance(carseatsRfModel5)
+
+  carseatsRfModel3 <- randomForest(Sales ~ . -id, data=carseatsTrain, 
+                                   mtry=3, ntree=500, importance=T)
+  carseatsRfPredict3 <- predict(carseatsRfModel3, carseatsTest)
+  calcErrorMSE(carseatsRfPredict3, carseatsTest$Sales)
+  importance(carseatsRfModel3)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[1] 2.616255
+
+               %IncMSE IncNodePurity
+CompPrice   23.4424110     205.55525
+Income       7.6258228     149.70766
+Advertising 19.1530628     193.53124
+Population   0.5848790     113.47272
+Price       57.3609166     573.99971
+ShelveLoc   60.8524263     639.43239
+Age         19.5046801     240.46644
+Education   -0.7537849      64.39684
+Urban       -1.2475755      15.42477
+US           5.3698781      21.90245
+
+[1] 2.997764
+
+               %IncMSE IncNodePurity
+CompPrice   15.8102163     207.84900
+Income       6.1435330     171.21018
+Advertising 16.1730093     217.25456
+Population  -1.1157884     149.08994
+Price       43.9929158     520.33023
+ShelveLoc   45.7239893     533.12373
+Age         18.4589601     253.16768
+Education   -0.3182207      88.57886
+Urban       -0.7581745      20.72996
+US           7.3942055      30.73317
+#+end_example
+
+We get similar importance data, and better results with high /m/.
+** Question 9
+#+BEGIN_QUOTE
+This problem involves the ~OJ~ data set which is part of the ISLR
+package.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Create a training set containing a random sample of 800 observations,
+and a test set containing the remaining observations.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  oj <- as_tibble(OJ) %>% mutate(id = 1:nrow(OJ))
+  ojTrain <- oj %>% sample_frac(800/nrow(OJ))
+  ojTest <- anti_join(oj, ojTrain, by='id')
+  glimpse(ojTrain)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Observations: 800
+Variables: 19
+$ Purchase       <fct> MM, MM, MM, CH, MM, CH, MM, MM, MM, MM, CH, CH, CH, ...
+$ WeekofPurchase <dbl> 277, 263, 256, 265, 256, 241, 230, 261, 236, 238, 23...
+$ StoreID        <dbl> 1, 2, 2, 7, 7, 1, 3, 7, 3, 7, 3, 3, 3, 2, 3, 2, 4, 2...
+$ PriceCH        <dbl> 1.99, 1.86, 1.89, 1.86, 1.86, 1.86, 1.79, 1.86, 1.79...
+$ PriceMM        <dbl> 2.13, 2.18, 2.18, 2.13, 2.18, 1.99, 1.79, 2.13, 2.09...
+$ DiscCH         <dbl> 0.24, 0.00, 0.13, 0.37, 0.00, 0.00, 0.00, 0.00, 0.00...
+$ DiscMM         <dbl> 0.00, 0.00, 0.00, 0.00, 0.00, 0.30, 0.00, 0.24, 0.00...
+$ SpecialCH      <dbl> 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0...
+$ SpecialMM      <dbl> 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1...
+$ LoyalCH        <dbl> 0.103205, 0.320000, 0.339899, 0.544000, 0.131072, 0....
+$ SalePriceMM    <dbl> 2.13, 2.18, 2.18, 2.13, 2.18, 1.69, 1.79, 1.89, 2.09...
+$ SalePriceCH    <dbl> 1.75, 1.86, 1.76, 1.49, 1.86, 1.86, 1.79, 1.86, 1.79...
+$ PriceDiff      <dbl> 0.38, 0.32, 0.42, 0.64, 0.32, -0.17, 0.00, 0.03, 0.3...
+$ Store7         <fct> No, No, No, Yes, Yes, No, No, Yes, No, Yes, No, No, ...
+$ PctDiscMM      <dbl> 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0....
+$ PctDiscCH      <dbl> 0.120603, 0.000000, 0.068783, 0.198925, 0.000000, 0....
+$ ListPriceDiff  <dbl> 0.14, 0.32, 0.29, 0.27, 0.32, 0.13, 0.00, 0.27, 0.30...
+$ STORE          <dbl> 1, 2, 2, 0, 0, 1, 3, 0, 3, 0, 3, 3, 3, 2, 3, 2, 4, 2...
+$ id             <int> 979, 1002, 306, 887, 685, 553, 784, 144, 698, 749, 4...
+#+end_example
+
+*** (b)
+#+BEGIN_QUOTE
+Fit a tree to the training data, with ~Purchase~ as the response and
+the other variables as predictors. Use the ~summary()~ function to
+produce summary statistics about the tree, and describe the results
+obtained. What is the training error rate? How many terminal nodes
+does the tree have?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  ojTreeModel <- tree(Purchase ~ . -id, data=ojTrain)
+  summary(ojTreeModel)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Classification tree:
+: tree(formula = Purchase ~ . - id, data = ojTrain)
+: Variables actually used in tree construction:
+: [1] "LoyalCH"   "PriceDiff"
+: Number of terminal nodes:  8 
+: Residual mean deviance:  0.7484 = 592.7 / 792 
+: Misclassification error rate: 0.1762 = 141 / 800
+
+This has produced a tree using just the two variables ~LoyalCH~ and
+~PriceDiff~, but needs 8 terminal nodes to make a prediction. The
+training error rate is 17.6%.
+*** (c)
+#+BEGIN_QUOTE
+Type in the name of the tree object in order to get a detailed
+text output. Pick one of the terminal nodes, and interpret the
+information displayed.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  ojTreeModel
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+node), split, n, deviance, yval, (yprob)
+      ,* denotes terminal node
+
+ 1) root 800 1075.00 CH ( 0.60250 0.39750 )  
+   2) LoyalCH < 0.5036 351  405.90 MM ( 0.26496 0.73504 )  
+     4) LoyalCH < 0.0356415 63    0.00 MM ( 0.00000 1.00000 ) *
+     5) LoyalCH > 0.0356415 288  362.30 MM ( 0.32292 0.67708 )  
+      10) LoyalCH < 0.276142 115  109.30 MM ( 0.18261 0.81739 ) *
+      11) LoyalCH > 0.276142 173  234.90 MM ( 0.41618 0.58382 )  
+        22) PriceDiff < 0.05 73   76.78 MM ( 0.21918 0.78082 ) *
+        23) PriceDiff > 0.05 100  137.20 CH ( 0.56000 0.44000 ) *
+   3) LoyalCH > 0.5036 449  353.10 CH ( 0.86637 0.13363 )  
+     6) LoyalCH < 0.705326 146  175.20 CH ( 0.71233 0.28767 )  
+      12) PriceDiff < 0.265 89  121.50 CH ( 0.57303 0.42697 ) *
+      13) PriceDiff > 0.265 57   28.97 CH ( 0.92982 0.07018 ) *
+     7) LoyalCH > 0.705326 303  136.50 CH ( 0.94059 0.05941 )  
+      14) PriceDiff < -0.39 14   19.12 CH ( 0.57143 0.42857 ) *
+      15) PriceDiff > -0.39 289   99.85 CH ( 0.95848 0.04152 ) *
+#+end_example
+
+For node 23. If ~LoyalCH~, customer brand loyalty, is between 0.276142
+and 0.5036, and the price difference ~PriceDiff~ is less than 5 cents,
+the prediction is the customer will choose Minute Maid brand juice.
+*** (d)
+#+BEGIN_QUOTE
+Create a plot of the tree, and interpret the results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q09d.png
+  plot(ojTreeModel)
+  text(ojTreeModel, pretty=0)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch08q09d.png]]
+
+Here we see the ~LoyalCH~ as the biggest contributor to the decision
+as the size of the line indicates. 
+*** (e)
+#+BEGIN_QUOTE
+Predict the response on the test data, and produce a confusion matrix
+comparing the test labels to the predicted test labels. What is the
+test error rate?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  ## Take two vectors and calculate the rate where they don't agree
+  calcErrorRate <- function(predict, actual) {
+    results <- table(predict, actual)
+    print(results)
+    errorRate <- (results[1,2] + results[2,1]) /
+      (results[1,1] + results[2,2] + results[1,2] + results[2,1])
+    print(paste("Error rate:", errorRate * 100, "%"))
+  }
+
+  calcErrorRate(predict(ojTreeModel, newdata=ojTest, type='class'), 
+                ojTest$Purchase)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Error in predict(ojTreeModel, newdata = ojTest, type = "class") : 
+:   object 'ojTreeModel' not found
+*** (f)
+#+BEGIN_QUOTE
+Apply the ~cv.tree()~ function to the training set in order to
+determine the optimal tree size.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+set.seed(42)
+ojCV <- cv.tree(ojTreeModel, FUN=prune.misclass)
+ojCV
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+$size
+[1] 8 5 2 1
+
+$dev
+[1] 180 178 169 318
+
+$k
+[1] -Inf    0    4  165
+
+$method
+[1] "misclass"
+
+attr(,"class")
+[1] "prune"         "tree.sequence"
+#+end_example
+
+*** (g)
+#+BEGIN_QUOTE
+Produce a plot with tree size on the x-axis and cross-validated
+classification error rate on the y-axis.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q09g.png
+  qplot(x=ojCV$size, y=ojCV$dev, geom="line",
+        xlab="tree size", ylab="CV error rate", 
+        main="CV classification error rate per tree size for OJ data set")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch08q09g.png]]
+
+*** (h)
+#+BEGIN_QUOTE
+Which tree size corresponds to the lowest cross-validated
+classification error rate?
+#+END_QUOTE
+
+From the plot, a tree size of 2.
+*** (i)
+#+BEGIN_QUOTE
+Produce a pruned tree corresponding to the optimal tree size obtained
+using cross-validation. If cross-validation does not lead to selection
+of a pruned tree, then create a pruned tree with five terminal nodes.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q09i.png
+  ojPruned <- prune.misclass(ojTreeModel, best=2)
+  plot(ojPruned)
+  text(ojPruned, pretty=0)
+#+END_SRC
+
+#+RESULTS:
+[[file:img/ch08q09i.png]]
+
+*** (j)
+#+BEGIN_QUOTE
+Compare the training error rates between the pruned and un-
+pruned trees. Which is higher?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  summary(ojPruned)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Classification tree:
+: snip.tree(tree = ojTreeModel, nodes = 3:2)
+: Variables actually used in tree construction:
+: [1] "LoyalCH"
+: Number of terminal nodes:  2 
+: Residual mean deviance:  0.9511 = 759 / 798 
+: Misclassification error rate: 0.1912 = 153 / 800
+
+The error rate has gone from 17.6% to 19.1% with the pruned tree.
+*** (k)
+#+BEGIN_QUOTE
+Compare the test error rates between the pruned and unpruned
+trees. Which is higher?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  calcErrorRate(predict(ojPruned, newdata=ojTest, type='class'), 
+                ojTest$Purchase)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:        actual
+: predict  CH  MM
+:      CH 131  21
+:      MM  40  78
+: [1] "Error rate: 22.5925925925926 %"
+
+Here the pruned test error rate is higher, at 22.6% compared to 18.5%.
+
+** Question 10
+#+BEGIN_QUOTE
+We now use boosting to predict ~Salary~ in the ~Hitters~ data set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Remove the observations for whom the salary information is unknown,
+and then log-transform the salaries.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  hitters <- Hitters %>%
+    filter(!is.na(Salary)) %>%
+    mutate(LogSalary = log(Salary))
+  glimpse(hitters)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Observations: 263
+Variables: 21
+$ AtBat     <int> 315, 479, 496, 321, 594, 185, 298, 323, 401, 574, 202, 41...
+$ Hits      <int> 81, 130, 141, 87, 169, 37, 73, 81, 92, 159, 53, 113, 60, ...
+$ HmRun     <int> 7, 18, 20, 10, 4, 1, 0, 6, 17, 21, 4, 13, 0, 7, 20, 2, 8,...
+$ Runs      <int> 24, 66, 65, 39, 74, 23, 24, 26, 49, 107, 31, 48, 30, 29, ...
+$ RBI       <int> 38, 72, 78, 42, 51, 8, 24, 32, 66, 75, 26, 61, 11, 27, 75...
+$ Walks     <int> 39, 76, 37, 30, 35, 21, 7, 8, 65, 59, 27, 47, 22, 30, 73,...
+$ Years     <int> 14, 3, 11, 2, 11, 2, 3, 2, 13, 10, 9, 4, 6, 13, 15, 5, 8,...
+$ CAtBat    <int> 3449, 1624, 5628, 396, 4408, 214, 509, 341, 5206, 4631, 1...
+$ CHits     <int> 835, 457, 1575, 101, 1133, 42, 108, 86, 1332, 1300, 467, ...
+$ CHmRun    <int> 69, 63, 225, 12, 19, 1, 0, 6, 253, 90, 15, 41, 4, 36, 177...
+$ CRuns     <int> 321, 224, 828, 48, 501, 30, 41, 32, 784, 702, 192, 205, 3...
+$ CRBI      <int> 414, 266, 838, 46, 336, 9, 37, 34, 890, 504, 186, 204, 10...
+$ CWalks    <int> 375, 263, 354, 33, 194, 24, 12, 8, 866, 488, 161, 203, 20...
+$ League    <fct> N, A, N, N, A, N, A, N, A, A, N, N, A, N, N, A, N, N, A, ...
+$ Division  <fct> W, W, E, E, W, E, W, W, E, E, W, E, E, E, W, W, W, E, W, ...
+$ PutOuts   <int> 632, 880, 200, 805, 282, 76, 121, 143, 0, 238, 304, 211, ...
+$ Assists   <int> 43, 82, 11, 40, 421, 127, 283, 290, 0, 445, 45, 11, 151, ...
+$ Errors    <int> 10, 14, 3, 4, 25, 7, 9, 19, 0, 22, 11, 7, 6, 8, 10, 16, 2...
+$ Salary    <dbl> 475.000, 480.000, 500.000, 91.500, 750.000, 70.000, 100.0...
+$ NewLeague <fct> N, A, N, N, A, A, A, N, A, A, N, N, A, N, N, A, N, N, N, ...
+$ LogSalary <dbl> 6.163315, 6.173786, 6.214608, 4.516339, 6.620073, 4.24849...
+#+end_example
+
+*** (b)
+#+BEGIN_QUOTE
+Create a training set consisting of the first 200 observations, and
+a test set consisting of the remaining observations.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  hittersTrain <- slice(hitters, 1:200)
+  hittersTest <- slice(hitters, -1:-200)
+  nrow(hittersTest)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 63
+
+*** (c)
+#+BEGIN_QUOTE
+Perform boosting on the training set with 1,000 trees for a range of
+values of the shrinkage parameter /λ/. Produce a plot with different
+shrinkage values on the /x/-axis and the corresponding training set
+MSE on the /y/-axis.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+
+  boostMSE <- function(train, test, lambda) {
+    nTrees <- 1000
+    model <- gbm(LogSalary ~ . -Salary, data=train, shrinkage=lambda,
+                 distribution = "gaussian", n.trees=nTrees)
+    predicted <- predict(model, newdata=test, n.trees=nTrees)
+    return(calcErrorMSE(test$LogSalary, predicted))
+  }
+  lambdas <- c(0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.5, 0.75)
+  mses <- sapply(lambdas, partial(boostMSE, train=hittersTrain, test=hittersTrain))
+  mses
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 0.361870390 0.170510724 0.139695284 0.078113882 0.050738251 0.024415975
+: [7] 0.004902165 0.001649579
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q10c.png
+  qplot(x=lambdas, y=mses, geom="line",
+        xlab="Shrinkage factor", ylab="Training MSE",
+        main="Training MSE vs boosting model shrinkage for Hitters data")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch08q10c.png]]
+
+*** (d)
+#+BEGIN_QUOTE
+Produce a plot with different shrinkage values on the /x/-axis and the
+corresponding test set MSE on the /y/-axis.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  mses <- sapply(lambdas, partial(boostMSE, train=hittersTrain, test=hittersTest))
+  mses
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 0.3360653 0.2928155 0.2755126 0.2772434 0.2512305 0.2850684 0.3776068
+: [8] 0.3781845
+
+#+BEGIN_SRC R :exports both :results graphics :file img/ch08q10d.png
+  qplot(x=lambdas, y=mses, geom="line",
+        xlab="Shrinkage factor", ylab="Test MSE",
+        main="Test MSE vs boosting model shrinkage for Hitters data")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch08q10d.png]]
+
+Minimum test error at around 0.1.
+*** (e)
+#+BEGIN_QUOTE
+Compare the test MSE of boosting to the test MSE that results from
+applying two of the regression approaches seen in Chapters 3 and 6.
+#+END_QUOTE
+Let's try simple linear regression with all variables.
+
+#+BEGIN_SRC R :results output :exports both
+  hittersLm <- lm(LogSalary ~ . -Salary, data=hittersTrain)
+  summary(hittersLm)
+  calcErrorMSE(hittersTest$LogSalary, predict(hittersLm, newdata=hittersTest))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = LogSalary ~ . - Salary, data = hittersTrain)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.44628 -0.43844  0.02835  0.39266  2.83081 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  4.4531779  0.1953605  22.795  < 2e-16 ***
+AtBat       -0.0041511  0.0015441  -2.688 0.007852 ** 
+Hits         0.0189964  0.0054505   3.485 0.000618 ***
+HmRun        0.0094426  0.0134247   0.703 0.482728    
+Runs        -0.0029961  0.0067142  -0.446 0.655968    
+RBI         -0.0026030  0.0056677  -0.459 0.646590    
+Walks        0.0113452  0.0039819   2.849 0.004894 ** 
+Years        0.0686664  0.0259832   2.643 0.008949 ** 
+CAtBat       0.0001479  0.0002850   0.519 0.604507    
+CHits       -0.0012085  0.0014250  -0.848 0.397515    
+CHmRun       0.0004085  0.0034671   0.118 0.906335    
+CRuns        0.0025268  0.0016188   1.561 0.120299    
+CRBI         0.0003625  0.0014589   0.248 0.804062    
+CWalks      -0.0016141  0.0006971  -2.316 0.021712 *  
+LeagueN      0.1487966  0.1654780   0.899 0.369751    
+DivisionW   -0.1359398  0.0880186  -1.544 0.124237    
+PutOuts      0.0005631  0.0001856   3.034 0.002770 ** 
+Assists      0.0008936  0.0005092   1.755 0.080969 .  
+Errors      -0.0099497  0.0100046  -0.995 0.321308    
+NewLeagueN  -0.0315309  0.1655198  -0.190 0.849135    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.5966 on 180 degrees of freedom
+Multiple R-squared:  0.6149,	Adjusted R-squared:  0.5743 
+F-statistic: 15.13 on 19 and 180 DF,  p-value: < 2.2e-16
+
+[1] 0.4917959
+#+end_example
+
+Test error is approximately double.
+
+Trying best subset.
+
+#+BEGIN_SRC R :results output :exports both
+  p <- 19
+  hittersBestSubset <- regsubsets(LogSalary ~ . -Salary, data=hittersTrain,
+                                  nvmax=p)
+  hittersBestSubsetSummary <- summary(hittersBestSubset)
+  hittersBestSubsetSummary
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Subset selection object
+Call: regsubsets.formula(LogSalary ~ . - Salary, data = hittersTrain, 
+    nvmax = p)
+19 Variables  (and intercept)
+           Forced in Forced out
+AtBat          FALSE      FALSE
+Hits           FALSE      FALSE
+HmRun          FALSE      FALSE
+Runs           FALSE      FALSE
+RBI            FALSE      FALSE
+Walks          FALSE      FALSE
+Years          FALSE      FALSE
+CAtBat         FALSE      FALSE
+CHits          FALSE      FALSE
+CHmRun         FALSE      FALSE
+CRuns          FALSE      FALSE
+CRBI           FALSE      FALSE
+CWalks         FALSE      FALSE
+LeagueN        FALSE      FALSE
+DivisionW      FALSE      FALSE
+PutOuts        FALSE      FALSE
+Assists        FALSE      FALSE
+Errors         FALSE      FALSE
+NewLeagueN     FALSE      FALSE
+1 subsets of each size up to 19
+Selection Algorithm: exhaustive
+          AtBat Hits HmRun Runs RBI Walks Years CAtBat CHits CHmRun CRuns CRBI
+1  ( 1 )  " "   " "  " "   " "  " " " "   " "   " "    " "   " "    " "   "*" 
+2  ( 1 )  " "   "*"  " "   " "  " " " "   "*"   " "    " "   " "    " "   " " 
+3  ( 1 )  " "   "*"  " "   " "  " " " "   "*"   " "    " "   " "    " "   " " 
+4  ( 1 )  " "   "*"  " "   " "  " " " "   "*"   " "    " "   " "    "*"   " " 
+5  ( 1 )  "*"   "*"  " "   " "  " " "*"   "*"   " "    " "   " "    " "   " " 
+6  ( 1 )  "*"   "*"  " "   " "  " " "*"   "*"   " "    " "   " "    "*"   " " 
+7  ( 1 )  "*"   "*"  " "   " "  " " "*"   "*"   " "    " "   " "    "*"   " " 
+8  ( 1 )  "*"   "*"  " "   " "  " " "*"   "*"   " "    " "   " "    "*"   " " 
+9  ( 1 )  "*"   "*"  " "   " "  " " "*"   "*"   " "    " "   "*"    "*"   " " 
+10  ( 1 ) "*"   "*"  " "   " "  " " "*"   "*"   " "    " "   "*"    "*"   " " 
+11  ( 1 ) "*"   "*"  " "   " "  " " "*"   "*"   " "    " "   "*"    "*"   " " 
+12  ( 1 ) "*"   "*"  " "   " "  " " "*"   "*"   " "    "*"   "*"    "*"   " " 
+13  ( 1 ) "*"   "*"  " "   " "  " " "*"   "*"   " "    "*"   "*"    "*"   " " 
+14  ( 1 ) "*"   "*"  " "   " "  " " "*"   "*"   "*"    "*"   "*"    "*"   " " 
+15  ( 1 ) "*"   "*"  "*"   " "  " " "*"   "*"   "*"    "*"   "*"    "*"   " " 
+16  ( 1 ) "*"   "*"  "*"   " "  "*" "*"   "*"   "*"    "*"   "*"    "*"   " " 
+17  ( 1 ) "*"   "*"  "*"   "*"  "*" "*"   "*"   "*"    "*"   " "    "*"   "*" 
+18  ( 1 ) "*"   "*"  "*"   "*"  "*" "*"   "*"   "*"    "*"   " "    "*"   "*" 
+19  ( 1 ) "*"   "*"  "*"   "*"  "*" "*"   "*"   "*"    "*"   "*"    "*"   "*" 
+          CWalks LeagueN DivisionW PutOuts Assists Errors NewLeagueN
+1  ( 1 )  " "    " "     " "       " "     " "     " "    " "       
+2  ( 1 )  " "    " "     " "       " "     " "     " "    " "       
+3  ( 1 )  " "    " "     " "       "*"     " "     " "    " "       
+4  ( 1 )  " "    " "     " "       "*"     " "     " "    " "       
+5  ( 1 )  " "    " "     " "       "*"     " "     " "    " "       
+6  ( 1 )  " "    " "     " "       "*"     " "     " "    " "       
+7  ( 1 )  "*"    " "     " "       "*"     " "     " "    " "       
+8  ( 1 )  "*"    " "     "*"       "*"     " "     " "    " "       
+9  ( 1 )  "*"    " "     "*"       "*"     " "     " "    " "       
+10  ( 1 ) "*"    " "     "*"       "*"     "*"     " "    " "       
+11  ( 1 ) "*"    "*"     "*"       "*"     "*"     " "    " "       
+12  ( 1 ) "*"    "*"     "*"       "*"     "*"     " "    " "       
+13  ( 1 ) "*"    "*"     "*"       "*"     "*"     "*"    " "       
+14  ( 1 ) "*"    "*"     "*"       "*"     "*"     "*"    " "       
+15  ( 1 ) "*"    "*"     "*"       "*"     "*"     "*"    " "       
+16  ( 1 ) "*"    "*"     "*"       "*"     "*"     "*"    " "       
+17  ( 1 ) "*"    "*"     "*"       "*"     "*"     "*"    " "       
+18  ( 1 ) "*"    "*"     "*"       "*"     "*"     "*"    "*"       
+19  ( 1 ) "*"    "*"     "*"       "*"     "*"     "*"    "*"
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch08q10e_1.png
+  plotMetrics <- function(summary, p, title) {
+    m <- c(1:p)
+    metrics <- data_frame(m=m,
+                          adjr2=summary$adjr2, 
+                          cp=summary$cp,
+                          rss=summary$rss,
+                          bic=summary$bic) %>%
+      gather(metric, value, -m)
+    ggplot(metrics, aes(x=m, y=value)) +
+      geom_line() +
+      scale_x_continuous(breaks=m) +
+      facet_wrap(scale="free", ~metric) +
+      labs(title=title)
+  }
+
+  plotMetrics(hittersBestSubsetSummary, p, 
+              "Model metrics for hitters using best subset")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch08q10e_1.png]]
+
+/p/ = 5 provides good results. 
+
+#+BEGIN_SRC R :results output :exports both
+  coef(hittersBestSubset, 5)
+#+END_SRC 
+
+#+RESULTS:
+:   (Intercept)         AtBat          Hits         Walks         Years 
+:  4.2263537367 -0.0031764231  0.0170756318  0.0081518382  0.0923938018 
+:       PutOuts 
+:  0.0004685263
+
+#+BEGIN_SRC R :results output :exports both
+  hittersLmB <- lm(LogSalary ~ AtBat + Hits + Walks + Years + PutOuts, 
+                   data=hittersTrain)
+  summary(hittersLmB)
+  calcErrorMSE(hittersTest$LogSalary, predict(hittersLmB, newdata=hittersTest))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = LogSalary ~ AtBat + Hits + Walks + Years + PutOuts, 
+    data = hittersTrain)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-1.3394 -0.4360 -0.0305  0.4318  3.2614 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  4.2263537  0.1465201  28.845  < 2e-16 ***
+AtBat       -0.0031764  0.0012876  -2.467  0.01450 *  
+Hits         0.0170756  0.0040050   4.264 3.14e-05 ***
+Walks        0.0081518  0.0027015   3.018  0.00289 ** 
+Years        0.0923938  0.0088234  10.471  < 2e-16 ***
+PutOuts      0.0004685  0.0001778   2.635  0.00909 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.603 on 194 degrees of freedom
+Multiple R-squared:  0.5761,	Adjusted R-squared:  0.5651 
+F-statistic: 52.72 on 5 and 194 DF,  p-value: < 2.2e-16
+
+[1] 0.4981346
+#+end_example
+
+We get similar results to the linear model with all variables. 
+*** (f)
+#+BEGIN_QUOTE
+Which variables appear to be the most important predictors in the
+boosted model?
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results  graphics  :file img/ch08q10f.png
+  set.seed(42)
+  summary(gbm(LogSalary ~ . -Salary, data=hittersTrain,
+              shrinkage=0.1, distribution = "gaussian", n.trees=1000))
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch08q10f.png]]
+
+|           | var       |     rel.inf |
+|-----------+-----------+-------------|
+| CAtBat    | CAtBat    | 15.94134322 |
+| CRuns     | CRuns     | 11.64411081 |
+| CRBI      | CRBI      | 10.75390147 |
+| PutOuts   | PutOuts   |  8.76406590 |
+| Walks     | Walks     |  7.51674809 |
+| Years     | Years     |  5.44944521 |
+| CHits     | CHits     |  5.44421375 |
+| CHmRun    | CHmRun    |  5.21832147 |
+| Assists   | Assists   |  4.91720470 |
+| RBI       | RBI       |  4.66108126 |
+| Hits      | Hits      |  3.82633344 |
+| HmRun     | HmRun     |  3.64003821 |
+| Runs      | Runs      |  3.35741213 |
+| AtBat     | AtBat     |  3.05719459 |
+| Errors    | Errors    |  2.52748812 |
+| CWalks    | CWalks    |  1.95901756 |
+| Division  | Division  |  0.63737585 |
+| NewLeague | NewLeague |  0.61661269 |
+| League    | League    |  0.06809151 |
+
+*** (g)
+#+BEGIN_QUOTE
+Now apply bagging to the training set. What is the test set MSE
+for this approach?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  hittersBag <- randomForest(LogSalary ~ . -Salary, data=hittersTrain,, 
+                                   mtry=p, ntree=1000)
+  calcErrorMSE(hittersTest$LogSalary, predict(hittersBag, newdata=hittersTest))
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 0.2278813
+
+Results are slightly improced compared with boosting.
+** Question 11
+#+BEGIN_QUOTE
+This question uses the ~Caravan~ data set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Create a training set consisting of the first 1,000 observations,
+and a test set consisting of the remaining observations.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  ## Need to convert Purchase to 1/0 to work with gbm
+  caravan <- Caravan %>% mutate(Purchase = ifelse(Purchase=="Yes", 1, 0))
+  caravanTrain <- slice(caravan, 1:1000)
+  caravanTest <- slice(caravan, -1:-1000)
+  nrow(caravanTest)
+  table(caravanTrain$Purchase)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 4822
+: 
+:   0   1 
+: 941  59
+
+*** (b)
+#+BEGIN_QUOTE
+Fit a boosting model to the training set with ~Purchase~ as the
+response and the other variables as predictors. Use 1,000 trees,
+and a shrinkage value of 0.01. Which predictors appear to be
+the most important?
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results  graphics  :file img/ch08q11b.png
+  set.seed(42)
+  caravanBoost <- gbm(Purchase ~ ., data=caravanTrain,
+                      shrinkage=0.01, distribution = "bernoulli", n.trees=1000)
+  summary(caravanBoost)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch08q11b.png]]
+
+Importance of variables, omitting those with < 1%.
+
+|          | var      |     rel.inf |
+|----------+----------+-------------|
+| PPERSAUT | PPERSAUT | 15.24304059 |
+| MKOOPKLA | MKOOPKLA | 10.22049754 |
+| MOPLHOOG | MOPLHOOG |  7.58473391 |
+| MBERMIDD | MBERMIDD |  5.98365038 |
+| PBRAND   | PBRAND   |  4.55749118 |
+| ABRAND   | ABRAND   |  4.07601736 |
+| MINK3045 | MINK3045 |  4.03149141 |
+| MGODGE   | MGODGE   |  3.50618597 |
+| MOSTYPE  | MOSTYPE  |  2.82332650 |
+| MAUT2    | MAUT2    |  2.61711991 |
+| MSKC     | MSKC     |  2.21439111 |
+| MAUT1    | MAUT1    |  2.13764619 |
+| MBERARBG | MBERARBG |  2.01645301 |
+
+*** (c)
+#+BEGIN_QUOTE
+Use the boosting model to predict the response on the test data.
+Predict that a person will make a purchase if the estimated
+probability of purchase is greater than 20%. Form a confusion matrix.
+What fraction of the people predicted to make a purchase do in fact
+make one? How does this compare with the results obtained from
+applying KNN or logistic regression to this data set?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  caravanPredict <- data_frame(prob=predict(caravanBoost, newdata=caravanTest,
+                                            type='response', n.trees=1000),
+                               pred=ifelse(prob > 0.2, 1, 0))
+  calcErrorRate(caravanPredict$pred, caravanTest$Purchase)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:        actual
+: predict    0    1
+:       0 4415  257
+:       1  118   32
+: [1] "Error rate: 7.77685607631688 %"
+
+118+32 people were predicted to make a purchase but only 32 actually
+did, so 21%.
+
+Trying logistic regression:
+
+#+BEGIN_SRC R :results output :exports both
+  caravanLR <- glm(Purchase ~ ., data=caravanTrain, family="binomial")
+  caravanPredictLR <- data_frame(prob=predict(caravanLR, newdata=caravanTest,
+                                              type='response'),
+                               pred=ifelse(prob > 0.2, 1, 0))
+  calcErrorRate(caravanPredictLR$pred, caravanTest$Purchase)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+Warning message:
+glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+Warning message:
+In predict.lm(object, newdata, se.fit, scale = 1, type = ifelse(type ==  :
+  prediction from a rank-deficient fit may be misleading
+
+       actual
+predict    0    1
+      0 4183  231
+      1  350   58
+[1] "Error rate: 12.0489423475736 %"
+#+end_example
+
+350+58 were predicted to make a purchase, 58 did, so around 14%. The
+boosting model performs better in this case.
+** Question 12
+#+BEGIN_QUOTE
+Apply boosting, bagging, and random forests to a data set of your
+choice. Be sure to fit the models on a training set and to evaluate
+their performance on a test set. How accurate are the results compared
+to simple methods like linear or logistic regression? Which of these
+approaches yields the best performance?
+#+END_QUOTE
+
+We'll use the ~Auto~ data set. First split into train and test.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  auto <- as_tibble(Auto) %>% mutate(id = 1:nrow(Auto))
+  autoTrain <- auto %>% sample_frac(0.75)
+  autoTest <- anti_join(auto, autoTrain, by='id')
+  nrow(autoTrain)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 294
+
+We'll use a linear model with terms we found significant in previous
+chapters.
+
+#+BEGIN_SRC R :results output :exports both
+  autoLM <- lm(mpg ~  weight +  + year + origin, data=autoTrain)
+  summary(autoLM)
+  calcErrorMSE(autoTest$mpg, predict(autoLM, newdata=autoTest))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = mpg ~ weight + +year + origin, data = autoTrain)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-8.4624 -2.1703 -0.0263  1.7915 13.0004 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.953e+01  4.795e+00  -4.073    6e-05 ***
+weight      -6.101e-03  3.041e-04 -20.064  < 2e-16 ***
+year         7.832e-01  5.751e-02  13.619  < 2e-16 ***
+origin       1.114e+00  3.083e-01   3.615 0.000354 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 3.457 on 290 degrees of freedom
+Multiple R-squared:  0.8129,	Adjusted R-squared:  0.811 
+F-statistic:   420 on 3 and 290 DF,  p-value: < 2.2e-16
+
+[1] 9.14364
+#+end_example
+
+Bagging:
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  p=8
+  autoBag <- randomForest(mpg ~ . -id -name, data=autoTrain, 
+                          mtry=p, ntree=1000, importance=T)
+  autoBagPredict <- predict(autoBag, autoTest)
+  calcErrorMSE(autoBagPredict, autoTest$mpg)
+  importance(autoBag)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Warning message:
+In randomForest.default(m, y, ...) :
+  invalid mtry: reset to within valid range
+
+[1] 5.215685
+
+               %IncMSE IncNodePurity
+cylinders    19.516199    3448.89498
+displacement 32.703241    5678.33777
+horsepower   24.044511    2166.48475
+weight       35.965701    4044.25450
+acceleration 18.592271     491.15410
+year         81.687086    2333.30251
+origin        9.056911      77.77097
+#+end_example
+
+Random forests, using p/3
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  autoRF <- randomForest(mpg ~ . -id -name, data=autoTrain, 
+                          mtry=p/3, ntree=1000, importance=T)
+  autoRFPredict <- predict(autoRF, autoTest)
+  calcErrorMSE(autoRFPredict, autoTest$mpg)
+  importance(autoRF)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[1] 4.769462
+
+               %IncMSE IncNodePurity
+cylinders    20.067392     3363.7197
+displacement 31.047605     4855.3676
+horsepower   25.871105     2696.8906
+weight       30.335653     4222.0400
+acceleration 17.432072      652.5003
+year         65.721747     2185.2161
+origin        7.366894      173.7923
+#+end_example
+
+Boosting, for a range of shrinkage factors:
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  tryAutoBoost <- function(lambda) {
+    autoBoost <- gbm(mpg ~ . -id -name, data=autoTrain, 
+                     shrinkage=lambda, distribution="gaussian", n.trees=1000)
+    autoBoostPredict <- predict(autoBoost, newdata=autoTest,  n.trees=1000)
+    calcErrorMSE(autoBoostPredict, autoTest$mpg)
+  }
+  
+  data_frame(lambdas=c(0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.5),
+             mse=sapply(lambdas, tryAutoBoost))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 7 x 2
+  lambdas   mse
+    <dbl> <dbl>
+1   0.001 19.9 
+2   0.005  6.25
+3   0.01   6.81
+4   0.05   6.95
+5   0.1    8.29
+6   0.2    8.34
+7   0.5   10.6
+#+end_example
+
+Random forests, bagging and boosting all provided improved MSE
+compared to simple linear regression.
