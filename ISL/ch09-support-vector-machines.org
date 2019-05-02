@@ -1,0 +1,1606 @@
+#+TITLE: Introduction to Statistical Learning, Chapter 9: Support Vector Machines
+#+AUTHOR: Rupert Lane
+#+EMAIL: rupert@rupert-lane.org
+#+PROPERTY: header-args:R :session *R*
+#+STARTUP: inlineimages
+#+STARTUP: latexpreview
+* Conceptual
+#+BEGIN_SRC R :exports code :results none
+  library(tidyverse)
+  library(ggplot2)
+  library(ISLR)
+  library(e1071)
+
+  options(crayon.enabled = FALSE)
+#+END_SRC
+** Question 1
+#+BEGIN_QUOTE
+This problem involves hyperplanes in two dimensions.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Sketch the hyperplane /1 + 3X₁ − X₂ = 0/. Indicate the set of points
+for which /1 + 3X₁ − X₂ > 0/, as well as the set of points for which
+/1 + 3X₁ − X₂ < 0/.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q01a.png
+  hypers <- data_frame(x1=seq(-10, 10, 0.1),
+                       x2a=1 + 3 * x1,
+                       x2b = (2 - x1)/2)
+  g1 <- ggplot(hypers) +
+     geom_line(aes(x=x1, y=x2a, colour='(a)')) +
+     annotate("label", x = 5, y = -20, label = "(a) > 0") + 
+     annotate("label", x = -5, y = 20, label = "(a) < 0") + 
+     labs(title = "Hyperplanes for question 1") +
+     xlab("X₁") + ylab("X₂")
+
+  g1
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q01a.png]]
+
+*** (b)
+#+BEGIN_QUOTE
+On the same plot, sketch the hyperplane /−2 + X₁ + 2X₂ = 0/. Indicate
+the set of points for which /−2 + X₁ + 2X₂ > 0/, as well as the set of
+points for which /−2 + X₁ + 2X₂ < 0/.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q01b.png
+  g1 +
+     geom_line(aes(x=x1, y=x2b, colour='(b)')) +
+     annotate("label", x = 7, y = 10, label = "(b) > 0") + 
+     annotate("label", x = -7, y = -5, label = "(b) < 0")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q01b.png]]
+** Question 2
+#+BEGIN_QUOTE
+We have seen that in /p/ = 2 dimensions, a linear decision boundary
+takes the form /β₀ + β₁X₁ + β₂X₂/ = 0. We now investigate a non-linear
+decision boundary.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Sketch the curve /(1 + X₁)² + (2 − X₂)² = 4/.
+#+END_QUOTE
+
+This is a circle with radius 2 and centred on /x/=-1, /y/=2.
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q02a.png
+  ## From https://stackoverflow.com/a/20904977
+  r <- 2 
+  xc <- -1
+  yc <- 2
+  g2 <- ggplot(hypers) +
+    annotate("path",
+             x=xc+r*cos(seq(0,2*pi,length.out=100)),
+             y=yc+r*sin(seq(0,2*pi,length.out=100))) +
+       labs(title = "Hyperplane for question 2") +
+       xlab("X₁") + ylab("X₂")
+
+    g2
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q02a.png]]
+
+*** (b)
+#+BEGIN_QUOTE
+On your sketch, indicate the set of points for which /(1 + X₁)² + (2 −
+X₂)² > 4/ as well as the set of points for which /(1 + X₁)² + (2 −
+X₂)² ≤ 4/
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q02b.png
+  g2 +
+     annotate("label", x = -1, y = 2, label = "≤ 4") +
+     annotate("label", x = -3, y = 3.5, label = "> 4")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q02b.png]]
+
+*** (c)
+#+BEGIN_QUOTE
+Suppose that a classifier assigns an observation to the blue class if
+/(1 + X₁)² + (2 − X₂)² > 4/ and to the red class otherwise. To what
+class is the observation (0, 0) classified? (−1, 1)? (2, 2)? (3, 8)?
+#+END_QUOTE
+
+| (0, 0)  | blue |
+| (−1, 1) | red  |
+| (2, 2)  | blue |
+| (3, 8)  | blue |
+*** (d)
+#+BEGIN_QUOTE
+Argue that while the decision boundary in (c) is not linear in
+terms of /X₁/ and /X₂/, it is linear in terms of /X₁/, /X₁²/, /X₂/, and
+/X₂²/.
+#+END_QUOTE
+
+The equation for the circle is a quadratic, so when expanded it is
+linear in terms of the above.
+** Question 3
+#+BEGIN_QUOTE
+Here we explore the maximal margin classifier on a toy data set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+We are given /n/ = 7 observations in /p/ = 2 dimensions. For each
+observation, there is an associated class label.
+
+| Obs/ | /X₁/ | /X₂/ | Y    |
+|------+------+------+------|
+|    1 |    3 |    4 | Red  |
+|    2 |    2 |    2 | Red  |
+|    3 |    4 |    4 | Red  |
+|    4 |    1 |    4 | Red  |
+|    5 |    2 |    1 | Blue |
+|    6 |    4 |    3 | Blue |
+|    7 |    4 |    1 | Blue |
+
+Sketch the observations.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q03a.png
+  points <- data_frame(x1 = c(3,2,4,1,2,4,4),
+                       x2 = c(4,2,4,4,1,3,1),
+                       y  = c('red', 'red', 'red', 'red', 'blue', 'blue', 'blue'))
+  g3 <- ggplot(points) +
+    geom_point(aes(x=x1, y=x2, colour=y), size=3) +
+    labs(title = "Maximal margin example for question 3") +
+    scale_colour_manual(values=c('blue', 'red')) +
+    xlim(0,5) + ylim(0,5) +
+    xlab("X₁") + ylab("X₂")
+
+  g3
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q03a.png]]
+
+*** (b)
+#+BEGIN_QUOTE
+Sketch the optimal separating hyperplane, and provide the equation for
+this hyperplane (of the form (9.1)).
+#+END_QUOTE
+
+Trying various lines, /0.5 - X₁ + X₂/  seems good. 
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q03b.png
+  g3 + geom_abline(intercept = -0.5, slope = 1)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q03b.png]]
+*** (c)
+#+BEGIN_QUOTE
+Describe the classification rule for the maximal margin classifier. It
+should be something along the lines of “Classify to Red if /β₀/ +
+/β₁X₁/ + /β₂X₂/ > 0, and classify to Blue otherwise.” Provide the
+values for /β₀/, /β₁/ and /β₂/.
+#+END_QUOTE
+
+Classify to Red if /β₀/ + /β₁X₁/ + /β₂X₂/ > 0 and classify to Blue
+otherwise, with /β₀/ = 0.5, /β₁/ = -1 and /β₂/ = 1.
+*** (d)
+#+BEGIN_QUOTE
+On your sketch, indicate the margin for the maximal margin
+hyperplane.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q03d.png
+    g3 + 
+      geom_abline(intercept = -0.5, slope = 1) +
+      geom_abline(intercept = 0, slope = 1, linetype='dashed') + 
+      geom_abline(intercept = -1, slope = 1, linetype='dashed')
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q03d.png]]
+*** (e)
+#+BEGIN_QUOTE
+Indicate the support vectors for the maximal margin classifier.
+#+END_QUOTE
+
+These would be arrows from the margin to the hyperplane for the four
+points on the margin
+*** (f)
+#+BEGIN_QUOTE
+Argue that a slight movement of the seventh observation would not
+affect the maximal margin hyperplane.
+#+END_QUOTE
+
+This point (the bottom right blue point) is outside the margin, so
+unless it moved inside the margin it would not affect the hyperplane.
+*** (g)
+#+BEGIN_QUOTE
+Sketch a hyperplane that is not the optimal separating hyperplane, and
+provide the equation for this hyperplane.
+#+END_QUOTE
+
+/0.5 - 1.1X₁ + X₂/
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q03g.png
+  g3 + geom_abline(intercept = -0.5, slope = 1.1)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q03g.png]]
+*** (h)
+#+BEGIN_QUOTE
+Draw an additional observation on the plot so that the two classes are
+no longer separable by a hyperplane.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q03h.png
+  g3 + geom_point(x=4.5,y=0.5,colour='red', size=3)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q03h.png]]
+
+* Applied
+** Question 4
+#+BEGIN_QUOTE
+Generate a simulated two-class data set with 100 observations and two
+features in which there is a visible but non-linear separation between
+the two classes. Show that in this setting, a support vector machine
+with a polynomial kernel (with degree greater than 1) or a radial
+kernel will outperform a support vector classifier on the training
+data. Which technique performs best on the test data? Make plots and
+report training and test error rates in order to back up your
+assertions.
+#+END_QUOTE
+
+We'll use a similar method to the lab in 9.6.2 to set up data
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q04_1.png
+  set.seed(42)
+  x <- matrix(rnorm(100*2), ncol=2)
+  x[1:30,] <- x[1:30,] + 2
+  x[31:60,] <- x[31:60,] - 2
+  y <- c(rep(1, 60), rep(2, 40))
+  dat <- as_tibble(data.frame(id=1:100, x=x, y=as.factor(y)))
+  plot(x, col=y)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q04_1.png]]
+
+Split into train and test.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  train <- dat %>% sample_frac(0.75)
+  test <- anti_join(dat, train, by='id')
+ 
+  ## We need to remove the id column for the plot function to work later
+  train <- select(train, -id)
+  test <- select(test, -id)
+  nrow(test)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 25
+
+Try a support vector classifier using cross-validation to pick the
+best cost.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  tune.out <- tune(svm, y~., data=train, kernel="linear",
+                   ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100), scale=FALSE))
+  summary(tune.out)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+  cost scale
+ 0.001 FALSE
+
+- best performance: 0.3642857 
+
+- Detailed performance results:
+   cost scale     error dispersion
+1 1e-03 FALSE 0.3642857  0.1650002
+2 1e-02 FALSE 0.3642857  0.1650002
+3 1e-01 FALSE 0.3642857  0.1650002
+4 1e+00 FALSE 0.3642857  0.1650002
+5 5e+00 FALSE 0.3642857  0.1650002
+6 1e+01 FALSE 0.3642857  0.1650002
+7 1e+02 FALSE 0.3642857  0.1650002
+#+end_example
+
+All errors are the same, probably because the linear classifier can't
+get a good fit for any value of cost.
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q04_2.png
+  bestModel <- tune.out$best.model
+  plot(bestModel, train)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q04_2.png]]
+
+Plotting this shows all have been classified as 1. 
+
+We can show the training and test error rate.
+
+#+BEGIN_SRC R :results output :exports both
+  ## Take two vectors and calculate the rate where they don't agree
+  calcErrorRate <- function(predict, actual) {
+    results <- table(predict, actual)
+    print(results)
+    errorRate <- (results[1,2] + results[2,1]) /
+      (results[1,1] + results[2,2] + results[1,2] + results[2,1])
+    print(paste("Error rate:", errorRate * 100, "%"))
+  }
+
+  calcErrorRate(predict(bestModel, train), train$y)
+  calcErrorRate(predict(bestModel, test), test$y)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+       actual
+predict  1  2
+      1 48 27
+      2  0  0
+[1] "Error rate: 36 %"
+
+       actual
+predict  1  2
+      1 12 13
+      2  0  0
+[1] "Error rate: 52 %"
+#+end_example
+
+So let's try a radial classifier.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  rTune.out <- tune(svm, y~., data=train, kernel="radial",
+                   ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100), scale=FALSE))
+  summary(rTune.out)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost scale
+   10 FALSE
+
+- best performance: 0.06785714 
+
+- Detailed performance results:
+   cost scale      error dispersion
+1 1e-03 FALSE 0.36428571 0.16500017
+2 1e-02 FALSE 0.36428571 0.16500017
+3 1e-01 FALSE 0.13392857 0.10249509
+4 1e+00 FALSE 0.09464286 0.11105618
+5 5e+00 FALSE 0.09464286 0.11105618
+6 1e+01 FALSE 0.06785714 0.07182430
+7 1e+02 FALSE 0.09285714 0.08740074
+#+end_example
+
+Selected cost of 1. Plotting:
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q04_3.png
+  rBestModel <- rTune.out$best.model
+  plot(rBestModel, train)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q04_3.png]]
+
+
+#+BEGIN_SRC R :results output :exports both
+  calcErrorRate(predict(rBestModel, train), train$y)
+  calcErrorRate(predict(rBestModel, test), test$y)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+       actual
+predict  1  2
+      1 46  1
+      2  2 26
+[1] "Error rate: 4 %"
+
+       actual
+predict  1  2
+      1  9  0
+      2  3 13
+[1] "Error rate: 12 %"
+#+end_example
+
+We end up with a 12% test error for radial, so this is better than
+linear.
+** Question 5
+#+BEGIN_QUOTE
+We have seen that we can fit an SVM with a non-linear kernel in order
+to perform classification using a non-linear decision boundary. We
+will now see that we can also obtain a non-linear decision boundary by
+performing logistic regression using non-linear transformations of the
+features.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Generate a data set with /n/ = 500 and /p/ = 2, such that the
+observations belong to two classes with a quadratic decision boundary
+between them. For instance, you can do this as follows:
+
+> x1 = runif(500) - 0.5
+> x2 = runif(500) - 0.5
+> y = 1*(x1^2 - x2^2 > 0)
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  x1 <- runif(500) - 0.5
+  x2 <- runif(500) - 0.5
+  y <- 1*(x1^2 - x2^2 > 0)
+  dat <- data_frame(id=1:500, x1=x1, x2=x2, y=as.factor(y))
+  glimpse(dat)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Observations: 500
+: Variables: 4
+: $ id <int> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 1...
+: $ x1 <dbl> 0.41480604, 0.43707541, -0.21386047, 0.33044763, 0.14174552, 0.0...
+: $ x2 <dbl> -0.36349479, -0.32286359, 0.01956045, 0.31112079, -0.38463799, 0...
+: $ y  <fct> 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0...
+
+*** (b)
+#+BEGIN_QUOTE
+Plot the observations, colored according to their class labels. Your
+plot should display /X₁/ on the /x/-axis, and /X₂/ on the /y/-axis.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q05b.png
+  set.seed(42)
+  x1 <- runif(500) - 0.5
+  x2 <- runif(500) - 0.5
+  y <- 1*(x1^2 - x2^2 > 0)
+  dat <- data_frame(id=1:500, x1=x1, x2=x2, y=as.factor(y))
+  qplot(x1, x2, col=y, data=dat, main="Plot of observations for question 5")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q05b.png]]
+
+*** (c)
+#+BEGIN_QUOTE
+Fit a logistic regression model to the data, using /X₁/ and /X₂/ as
+predictors.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  train <- dat %>% sample_frac(0.75)
+  test <- anti_join(dat, train, by='id')
+  train <- select(train, -id)
+  test <- select(test, -id)
+
+  lrModel <- glm(y ~ x1 + x2, data=train, family='binomial')
+  summary(lrModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+glm(formula = y ~ x1 + x2, family = "binomial", data = train)
+
+Deviance Residuals: 
+   Min      1Q  Median      3Q     Max  
+-1.365  -1.232   1.044   1.101   1.191  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)  
+(Intercept)   0.1849     0.1040   1.779   0.0752 .
+x1           -0.1241     0.3515  -0.353   0.7241  
+x2           -0.3715     0.3692  -1.006   0.3143  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 516.59  on 374  degrees of freedom
+Residual deviance: 515.48  on 372  degrees of freedom
+AIC: 521.48
+
+Number of Fisher Scoring iterations: 4
+#+end_example
+
+*** (d)
+#+BEGIN_QUOTE
+Apply this model to the training data in order to obtain a predicted
+class label for each training observation. Plot the observations,
+colored according to the predicted class labels. The decision boundary
+should be linear.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  prob <- predict(lrModel, test, response='class')
+  pred <- ifelse(prob > 0.5, 1, 0)
+  table(pred, test$y)
+#+END_SRC 
+
+
+#+RESULTS:
+: 
+:     
+: pred  0  1
+:    0 67 58
+
+The model has predicted everything as 0.
+
+*** (e)
+#+BEGIN_QUOTE
+Now fit a logistic regression model to the data using non-linear
+functions of /X₁/ and /X₂/ as predictors (e.g. /X₁²/, /X₁/ * /X₂/,
+log(/X₂/), and so forth).
+#+END_QUOTE
+
+Given the way the data was constructed, we can use a polynomial model.
+
+#+BEGIN_SRC R :results output :exports both
+  lrPolyModel <- glm(y ~ poly(x1, 2) + poly(x2, 2) + I(x1*x2),
+                     data=train, family='binomial')
+  summary(lrPolyModel)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Warning messages:
+1: glm.fit: algorithm did not converge 
+2: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+Call:
+glm(formula = y ~ poly(x1, 2) + poly(x2, 2) + I(x1 * x2), family = "binomial", 
+    data = train)
+
+Deviance Residuals: 
+   Min      1Q  Median      3Q     Max  
+ -8.49    0.00    0.00    0.00    0.00  
+
+Coefficients:
+               Estimate Std. Error    z value Pr(>|z|)    
+(Intercept)   3.936e+14  3.469e+06  113459019   <2e-16 ***
+poly(x1, 2)1  3.822e+14  6.742e+07    5669600   <2e-16 ***
+poly(x1, 2)2  4.784e+16  6.724e+07  711546078   <2e-16 ***
+poly(x2, 2)1  5.117e+14  6.756e+07    7574243   <2e-16 ***
+poly(x2, 2)2 -4.444e+16  6.721e+07 -661283469   <2e-16 ***
+I(x1 * x2)   -7.346e+14  4.163e+07  -17645815   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 516.59  on 374  degrees of freedom
+Residual deviance: 432.52  on 369  degrees of freedom
+AIC: 444.52
+
+Number of Fisher Scoring iterations: 25
+#+end_example
+
+*** (f)
+#+BEGIN_QUOTE
+Apply this model to the training data in order to obtain a predicted
+class label for each training observation. Plot the observations,
+colored according to the predicted class labels. The decision boundary
+should be obviously non-linear. If it is not, then repeat (a)-(e)
+until you come up with an example in which the predicted class labels
+are obviously non-linear.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  prob <- predict(lrPolyModel, train, response='class')
+  pred <- ifelse(prob > 0.5, 1, 0)
+  table(pred, train$y)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:     
+: pred   0   1
+:    0 164   0
+:    1   6 205
+
+Only six points have been mis-classified.
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q05f.png
+  polyResults <- train %>% mutate(pred = as.factor(pred))
+  qplot(x1, x2, col=pred, data=polyResults, 
+        main="Plot of predicted training observations using a polynomial model")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q05f.png]]
+
+*** (g)
+#+BEGIN_QUOTE
+Fit a support vector classifier to the data with /X₁/ and /X₂/ as
+predictors. Obtain a class prediction for each training observation.
+Plot the observations, colored according to the predicted class
+labels.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  svcTune <- tune(svm, y~x1+x2, data=train, kernel="linear",
+                  ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100), scale=FALSE))
+  summary(svcTune)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+  cost scale
+ 0.001 FALSE
+
+- best performance: 0.4530583 
+
+- Detailed performance results:
+   cost scale     error dispersion
+1 1e-03 FALSE 0.4530583  0.0785151
+2 1e-02 FALSE 0.4530583  0.0785151
+3 1e-01 FALSE 0.4530583  0.0785151
+4 1e+00 FALSE 0.4530583  0.0785151
+5 5e+00 FALSE 0.4530583  0.0785151
+6 1e+01 FALSE 0.4530583  0.0785151
+7 1e+02 FALSE 0.4530583  0.0785151
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q05g.png
+  plot(svcTune$best.model, train)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q05g.png]]
+
+Similar to the last question, a linear boundary cannot be found so all
+points are classified as the same value.
+*** (h)
+#+BEGIN_QUOTE
+Fit a SVM using a non-linear kernel to the data. Obtain a class
+prediction for each training observation. Plot the observations,
+colored according to the predicted class labels.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  svmTune <- tune(svm, y~x1+x2, data=train, 
+                  ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100), scale=FALSE))
+  summary(svmTune)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost scale
+  100 FALSE
+
+- best performance: 0.03726885 
+
+- Detailed performance results:
+   cost scale      error dispersion
+1 1e-03 FALSE 0.45305832 0.07851510
+2 1e-02 FALSE 0.45305832 0.07851510
+3 1e-01 FALSE 0.45305832 0.07851510
+4 1e+00 FALSE 0.24786629 0.07671939
+5 5e+00 FALSE 0.07745377 0.06262881
+6 1e+01 FALSE 0.06401138 0.04569298
+7 1e+02 FALSE 0.03726885 0.03585810
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q05h.png
+  plot(svmTune$best.model, train)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q05h.png]]
+
+*** (i)
+#+BEGIN_QUOTE
+Comment on your results.
+#+END_QUOTE
+We've shown that a logistic regression model with non-linear
+transformations can form a non-linear decision boundary similar to a
+SVM.
+
+Comparing the test error for the two, they are very similar.
+
+#+BEGIN_SRC R :results output :exports both
+  calcErrorRate(ifelse(predict(lrPolyModel, test, response='class') > 0.5, 1, 0), test$y)
+  calcErrorRate(predict(svmTune$best.model, test), test$y)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+       actual
+predict  0  1
+      0 66  0
+      1  1 58
+[1] "Error rate: 0.8 %"
+
+       actual
+predict  0  1
+      0 65  0
+      1  2 58
+[1] "Error rate: 1.6 %"
+#+end_example
+
+** Question 6
+#+BEGIN_QUOTE
+At the end of Section 9.6.1, it is claimed that in the case of data
+that is just barely linearly separable, a support vector classifier
+with a small value of cost that mis-classifies a couple of training
+observations may perform better on test data than one with a huge
+value of cost that does not mis-classify any training observations. You
+will now investigate this claim.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Generate two-class data with /p/ = 2 in such a way that the classes
+are just barely linearly separable.
+#+END_QUOTE
+
+I'm not quite sure what to do to make it barely linearly separable,
+but we'll use random data with the feature separation at a line
+through the origin.
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch09q06a.png
+  genData <- function(n) {
+    x1 <- rnorm(n)
+    x2 <- rnorm(n)
+    y <- ifelse(x1 - x2 > 0, 1, 2)
+    as_tibble(data.frame(x1=x1, x2=x2, y=as.factor(y)))
+  }
+  set.seed(42)
+  train <- genData(5000)
+  qplot(x1, x2, col=y, data=train, main="Plot of observations for question 6")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch09q06a.png]]
+
+*** (b)
+#+BEGIN_QUOTE
+Compute the cross-validation error rates for support vector
+classifiers with a range of cost values. How many training errors are
+misclassified for each value of cost considered, and how does this
+relate to the cross-validation errors obtained?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  costs <- c(0.0001, 0.001, 0.01, 0.1, 1,10)
+  set.seed(42)
+  svcTune <- tune(svm, y~x1+x2, data=train, kernel="linear",
+                  ranges=list(cost=costs, scale=FALSE))
+  summary(svcTune)
+
+  svcErrorRate <- function(train, test, cost) {
+    print(paste("Cost", cost))
+    model <- svm(y~x1+x2, data=train, kernel="linear", cost=cost, scale=FALSE)
+    pred <- predict(model, test)
+    calcErrorRate(pred, test$y)
+  }
+  sapply(costs, partial(svcErrorRate, train=train, test=train))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost scale
+   10 FALSE
+
+- best performance: 8e-04 
+
+- Detailed performance results:
+   cost scale  error  dispersion
+1 1e-04 FALSE 0.0698 0.048620526
+2 1e-03 FALSE 0.0076 0.004195235
+3 1e-02 FALSE 0.0020 0.002666667
+4 1e-01 FALSE 0.0012 0.001932184
+5 1e+00 FALSE 0.0012 0.001686548
+6 1e+01 FALSE 0.0008 0.001398412
+
+[1] "Cost 1e-04"
+       actual
+predict    1    2
+      1 2497   26
+      2    7 2470
+[1] "Error rate: 0.66 %"
+[1] "Cost 0.001"
+       actual
+predict    1    2
+      1 2500   43
+      2    4 2453
+[1] "Error rate: 0.94 %"
+[1] "Cost 0.01"
+       actual
+predict    1    2
+      1 2502    4
+      2    2 2492
+[1] "Error rate: 0.12 %"
+[1] "Cost 0.1"
+       actual
+predict    1    2
+      1 2503    7
+      2    1 2489
+[1] "Error rate: 0.16 %"
+[1] "Cost 1"
+       actual
+predict    1    2
+      1 2504    4
+      2    0 2492
+[1] "Error rate: 0.08 %"
+[1] "Cost 10"
+       actual
+predict    1    2
+      1 2504    4
+      2    0 2492
+[1] "Error rate: 0.08 %"
+[1] "Error rate: 0.66 %" "Error rate: 0.94 %" "Error rate: 0.12 %"
+[4] "Error rate: 0.16 %" "Error rate: 0.08 %" "Error rate: 0.08 %"
+#+end_example
+
+To summarise:
+
+|  cost |    CV error | Class error |
+|-------+-------------+-------------|
+| 1e-04 | 0.048620526 |       0.66% |
+| 1e-03 | 0.004195235 |       0.94% |
+| 1e-02 | 0.002666667 |       0.12% |
+| 1e-01 | 0.001932184 |       0.16% |
+| 1e+00 | 0.001686548 |       0.08% |
+| 1e+01 | 0.001398412 |       0.08% |
+
+Cost of 10 gives lowest CV error and the best classification
+error rate.
+
+*** (c)
+#+BEGIN_QUOTE
+Generate an appropriate test data set, and compute the test errors
+corresponding to each of the values of cost considered. Which value of
+cost leads to the fewest test errors, and how does this compare to the
+values of cost that yield the fewest training errors and the fewest
+cross-validation errors?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(142)
+  test <- genData(1000)
+
+  sapply(costs, partial(svcErrorRate, train=train, test=test))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[1] "Cost 1e-04"
+       actual
+predict   1   2
+      1 494  10
+      2   1 495
+[1] "Error rate: 1.1 %"
+[1] "Cost 0.001"
+       actual
+predict   1   2
+      1 495  13
+      2   0 492
+[1] "Error rate: 1.3 %"
+[1] "Cost 0.01"
+       actual
+predict   1   2
+      1 495   1
+      2   0 504
+[1] "Error rate: 0.1 %"
+[1] "Cost 0.1"
+       actual
+predict   1   2
+      1 495   3
+      2   0 502
+[1] "Error rate: 0.3 %"
+[1] "Cost 1"
+       actual
+predict   1   2
+      1 495   1
+      2   0 504
+[1] "Error rate: 0.1 %"
+[1] "Cost 10"
+       actual
+predict   1   2
+      1 494   2
+      2   1 503
+[1] "Error rate: 0.3 %"
+[1] "Error rate: 1.1 %" "Error rate: 1.3 %" "Error rate: 0.1 %"
+[4] "Error rate: 0.3 %" "Error rate: 0.1 %" "Error rate: 0.3 %"
+#+end_example
+
+Here a cost of 0.01 actually gives us better results.
+
+*** (d)
+#+BEGIN_QUOTE
+Discuss your results.
+#+END_QUOTE
+
+The higher cost may overfit to the data.
+** Question 7
+#+BEGIN_QUOTE
+In this problem, you will use support vector approaches in order to
+predict whether a given car gets high or low gas mileage based on the
+~Auto~ data set.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Create a binary variable that takes on a 1 for cars with gas mileage
+above the median, and a 0 for cars with gas mileage below the median.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  auto <- Auto %>% as_tibble %>%
+    mutate(mpg01 = as.factor(ifelse(mpg > median(mpg), 1, 0))) %>%
+    dplyr::select(-name, -mpg)
+  table(auto$mpg01)
+  glimpse(auto)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+  0   1 
+196 196
+
+Observations: 392
+Variables: 8
+$ cylinders    <dbl> 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, 6, 6, 6, ...
+$ displacement <dbl> 307, 350, 318, 304, 302, 429, 454, 440, 455, 390, 383,...
+$ horsepower   <dbl> 130, 165, 150, 150, 140, 198, 220, 215, 225, 190, 170,...
+$ weight       <dbl> 3504, 3693, 3436, 3433, 3449, 4341, 4354, 4312, 4425, ...
+$ acceleration <dbl> 12.0, 11.5, 11.0, 12.0, 10.5, 10.0, 9.0, 8.5, 10.0, 8....
+$ year         <dbl> 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70...
+$ origin       <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, ...
+$ mpg01        <fct> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, ...
+#+end_example
+
+*** (b)
+#+BEGIN_QUOTE
+Fit a support vector classifier to the data with various values of
+~cost~, in order to predict whether a car gets high or low gas
+mileage. Report the cross-validation errors associated with different
+values of this parameter. Comment on your results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  costs <- c(0.01, 0.1, 1, 10, 100, 1000)
+  set.seed(42)
+  svcTune <- tune(svm, mpg01~., data=auto, kernel="linear",
+                  ranges=list(cost=costs))
+  summary(svcTune)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost
+   10
+
+- best performance: 0.08653846 
+
+- Detailed performance results:
+   cost      error dispersion
+1 1e-02 0.08916667 0.05258186
+2 1e-01 0.09673077 0.05699840
+3 1e+00 0.09423077 0.04632467
+4 1e+01 0.08653846 0.03776796
+5 1e+02 0.08653846 0.03776796
+6 1e+03 0.08653846 0.03776796
+#+end_example
+
+We get the lowest error 0.0378 at cost = 10.
+
+*** (c)
+#+BEGIN_QUOTE
+Now repeat (b), this time using SVMs with radial and polynomial basis
+kernels, with different values of gamma and degree and cost . Comment
+on your results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  svcTunePoly <- tune(svm, mpg01~., data=auto, kernel="polynomial",
+                      ranges=list(cost=costs, degree=2:5))
+  summary(svcTunePoly)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost degree
+   10      3
+
+- best performance: 0.07621795 
+
+- Detailed performance results:
+    cost degree      error dispersion
+1  1e-02      2 0.48243590 0.15206567
+2  1e-01      2 0.28108974 0.06318810
+3  1e+00      2 0.27025641 0.09718216
+4  1e+01      2 0.19083333 0.07899168
+5  1e+02      2 0.18326923 0.06521573
+6  1e+03      2 0.16551282 0.06409245
+7  1e-02      3 0.26576923 0.07872022
+8  1e-01      3 0.19429487 0.11454046
+9  1e+00      3 0.09679487 0.05172882
+10 1e+01      3 0.07621795 0.05015358
+11 1e+02      3 0.09416667 0.03322969
+12 1e+03      3 0.10685897 0.04351851
+13 1e-02      4 0.38076923 0.11140658
+14 1e-01      4 0.27339744 0.08041984
+15 1e+00      4 0.26493590 0.10509261
+16 1e+01      4 0.17076923 0.04911761
+17 1e+02      4 0.14006410 0.05044478
+18 1e+03      4 0.14512821 0.04376974
+19 1e-02      5 0.28891026 0.10371067
+20 1e-01      5 0.26064103 0.07543141
+21 1e+00      5 0.12724359 0.06404930
+22 1e+01      5 0.11993590 0.03438571
+23 1e+02      5 0.10448718 0.03858125
+24 1e+03      5 0.10698718 0.04546660
+#+end_example
+
+Best error is 0.050 at cost 10 and polynomial degree 3.
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  svcTuneRadial <- tune(svm, mpg01~., data=auto, kernel="radial",
+                      ranges=list(cost=costs, gamma=c(0.01, 0.1, 1, 10)))
+  summary(svcTuneRadial)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost gamma
+    1     1
+
+- best performance: 0.07878205 
+
+- Detailed performance results:
+    cost gamma      error dispersion
+1  1e-02  0.01 0.59679487 0.05312225
+2  1e-01  0.01 0.11237179 0.05439623
+3  1e+00  0.01 0.08660256 0.05519479
+4  1e+01  0.01 0.08660256 0.06001684
+5  1e+02  0.01 0.08647436 0.05341235
+6  1e+03  0.01 0.10173077 0.05282235
+7  1e-02  0.10 0.17602564 0.08546592
+8  1e-01  0.10 0.09173077 0.05254364
+9  1e+00  0.10 0.08916667 0.05258186
+10 1e+01  0.10 0.09653846 0.05358794
+11 1e+02  0.10 0.08891026 0.04725465
+12 1e+03  0.10 0.11711538 0.04617170
+13 1e-02  1.00 0.59679487 0.05312225
+14 1e-01  1.00 0.09673077 0.05699840
+15 1e+00  1.00 0.07878205 0.04472958
+16 1e+01  1.00 0.09403846 0.04383004
+17 1e+02  1.00 0.10692308 0.04869339
+18 1e+03  1.00 0.10692308 0.04869339
+19 1e-02 10.00 0.59679487 0.05312225
+20 1e-01 10.00 0.59679487 0.05312225
+21 1e+00 10.00 0.15256410 0.09013397
+22 1e+01 10.00 0.13467949 0.08268234
+23 1e+02 10.00 0.13467949 0.08268234
+24 1e+03 10.00 0.13467949 0.08268234
+#+end_example
+
+Best error is 0.045 at cost = 1 and gamma = 1.
+*** (d)
+#+BEGIN_QUOTE
+Make some plots to back up your assertions in (b) and (c).
+
+Hint: In the lab, we used the ~plot()~ function for svm object
+only in cases with /p/ = 2. When /p/ > 2, you can use the ~plot()~
+function to create plots displaying pairs of variables at a time.
+Essentially, instead of typing
+
+~> plot ( svmfit , dat )~
+
+where ~svmfit~ contains your fitted model and ~dat~ is a data frame
+containing your data, you can type
+
+~> plot ( svmfit , dat , x1∼x4 )~
+
+in order to plot just the first and fourth variables. However, you
+must replace ~x1~ and ~x4~ with the correct variable names. To find
+out more, type ~?plot.svm~.
+#+END_QUOTE
+
+The linear model does the best of the three.
+
+#+BEGIN_SRC R :results output :exports both
+  calcErrorRate(predict(svcTune$best.model, auto), auto$mpg01)
+  svcTune$best.model
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+       actual
+predict   0   1
+      0 175  10
+      1  21 186
+[1] "Error rate: 7.90816326530612 %"
+
+Call:
+best.tune(method = svm, train.x = mpg01 ~ ., data = auto, ranges = list(cost = costs), 
+    kernel = "linear")
+
+
+Parameters:
+   SVM-Type:  C-classification 
+ SVM-Kernel:  linear 
+       cost:  10 
+      gamma:  0.1428571 
+
+Number of Support Vectors:  83
+#+end_example
+
+However I am having trouble getting plots to work against the
+categorical variable ~mpg01~.
+** Question 8
+#+BEGIN_QUOTE
+This problem involves the ~OJ~ data set which is part of the ~ISLR~
+package.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Create a training set containing a random sample of 800
+observations, and a test set containing the remaining
+observations.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  oj <- as_tibble(OJ) %>% mutate(id = 1:nrow(OJ))
+  ojTrain <- oj %>% sample_frac(800/nrow(OJ))
+  ojTest <- anti_join(oj, ojTrain, by='id')
+  glimpse(ojTrain)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Observations: 800
+Variables: 19
+$ Purchase       <fct> MM, CH, CH, CH, CH, MM, CH, CH, MM, CH, CH, CH, CH, ...
+$ WeekofPurchase <dbl> 245, 257, 239, 246, 264, 229, 272, 270, 255, 262, 26...
+$ StoreID        <dbl> 2, 3, 3, 4, 7, 4, 4, 1, 7, 7, 7, 4, 7, 7, 1, 3, 7, 7...
+$ PriceCH        <dbl> 1.89, 1.99, 1.79, 1.99, 1.86, 1.79, 1.99, 1.86, 1.86...
+$ PriceMM        <dbl> 2.09, 2.29, 2.23, 2.23, 2.13, 1.79, 2.09, 2.18, 2.18...
+$ DiscCH         <dbl> 0.00, 0.00, 0.00, 0.00, 0.37, 0.00, 0.00, 0.00, 0.00...
+$ DiscMM         <dbl> 0.00, 0.40, 0.00, 0.00, 0.00, 0.00, 0.40, 0.00, 0.00...
+$ SpecialCH      <dbl> 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0...
+$ SpecialMM      <dbl> 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0...
+$ LoyalCH        <dbl> 0.500000, 0.600000, 0.813222, 0.886992, 0.795200, 0....
+$ SalePriceMM    <dbl> 2.09, 1.89, 2.23, 2.23, 2.13, 1.79, 1.69, 2.18, 2.18...
+$ SalePriceCH    <dbl> 1.89, 1.99, 1.79, 1.99, 1.49, 1.79, 1.99, 1.86, 1.86...
+$ PriceDiff      <dbl> 0.20, -0.10, 0.44, 0.24, 0.64, 0.00, -0.30, 0.32, 0....
+$ Store7         <fct> No, No, No, No, Yes, No, No, No, Yes, Yes, Yes, No, ...
+$ PctDiscMM      <dbl> 0.000000, 0.174672, 0.000000, 0.000000, 0.000000, 0....
+$ PctDiscCH      <dbl> 0.000000, 0.000000, 0.000000, 0.000000, 0.198925, 0....
+$ ListPriceDiff  <dbl> 0.20, 0.30, 0.44, 0.24, 0.27, 0.00, 0.10, 0.32, 0.32...
+$ STORE          <dbl> 2, 3, 3, 4, 0, 4, 4, 1, 0, 0, 0, 4, 0, 0, 1, 3, 0, 0...
+$ id             <int> 561, 321, 634, 49, 24, 356, 165, 622, 410, 899, 601,...
+#+end_example
+
+*** (b)
+#+BEGIN_QUOTE
+Fit a support vector classifier to the training data using
+~cost=0.01~, with ~Purchase~ as the response and the other variables
+as predictors. Use the ~summary()~ function to produce summary
+statistics, and describe the results obtained.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  model <- svm(Purchase~.-id, data=ojTrain, kernel="linear", cost=0.01)
+  summary(model)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+svm(formula = Purchase ~ . - id, data = ojTrain, kernel = "linear", 
+    cost = 0.01)
+
+
+Parameters:
+   SVM-Type:  C-classification 
+ SVM-Kernel:  linear 
+       cost:  0.01 
+      gamma:  0.05555556 
+
+Number of Support Vectors:  432
+
+ ( 215 217 )
+
+
+Number of Classes:  2 
+
+Levels: 
+ CH MM
+#+end_example
+
+432 of the 800 points were used as support vectors. 215 of the 800
+points are classified as CH, 217 as MM.
+*** (c)
+#+BEGIN_QUOTE
+What are the training and test error rates?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  "Train"
+  calcErrorRate(predict(model, ojTrain), ojTrain$Purchase)
+  "Test"
+  calcErrorRate(predict(model, ojTest), ojTest$Purchase)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+[1] "Train"
+
+       actual
+predict  CH  MM
+     CH 432  77
+     MM  60 231
+[1] "Error rate: 17.125 %"
+
+[1] "Test"
+
+       actual
+predict  CH  MM
+     CH 142  25
+     MM  19  84
+[1] "Error rate: 16.2962962962963 %"
+#+end_example
+
+*** (d)
+#+BEGIN_QUOTE
+Use the ~tune()~ function to select an optimal ~cost~. Consider values
+in the range 0.01 to 10.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  costs <- c(0.01, 0.1, 1, 10)
+  ojTune <- tune(svm, Purchase~.-id, data=ojTrain, kernel="linear",
+                      ranges=list(cost=costs))
+  summary(ojTune)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost
+    1
+
+- best performance: 0.175 
+
+- Detailed performance results:
+   cost   error dispersion
+1  0.01 0.17750 0.02415229
+2  0.10 0.17625 0.03356689
+3  1.00 0.17500 0.02886751
+4 10.00 0.18625 0.02729087
+#+end_example
+
+*** (e)
+#+BEGIN_QUOTE
+Compute the training and test error rates using this new value
+for cost .
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  model <- ojTune$best.model
+  "Train"
+  calcErrorRate(predict(model, ojTrain), ojTrain$Purchase)
+  "Test"
+  calcErrorRate(predict(model, ojTest), ojTest$Purchase)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+[1] "Train"
+
+       actual
+predict  CH  MM
+     CH 434  76
+     MM  58 232
+[1] "Error rate: 16.75 %"
+
+[1] "Test"
+
+       actual
+predict  CH  MM
+     CH 140  23
+     MM  21  86
+[1] "Error rate: 16.2962962962963 %"
+#+end_example
+
+Slightly reduced training error but similar test error.
+*** (f)
+#+BEGIN_QUOTE
+Repeat parts (b) through (e) using a support vector machine
+with a radial kernel. Use the default value for ~gamma~.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  model <- svm(Purchase~.-id, data=ojTrain, kernel="radial", cost=0.01)
+  summary(model)
+  "Train - radial cost=0.01"
+  calcErrorRate(predict(model, ojTrain), ojTrain$Purchase)
+  "Test - radial cost=0.01"
+  calcErrorRate(predict(model, ojTest), ojTest$Purchase)
+
+  set.seed(42)
+  ojTune <- tune(svm, Purchase~.-id, data=ojTrain, kernel="radial",
+                      ranges=list(cost=costs))
+  summary(ojTune)
+
+  model <- ojTune$best.model
+  "Train - radial best model"
+  calcErrorRate(predict(model, ojTrain), ojTrain$Purchase)
+  "Test - radial best model"
+  calcErrorRate(predict(model, ojTest), ojTest$Purchase)
+
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+svm(formula = Purchase ~ . - id, data = ojTrain, kernel = "radial", 
+    cost = 0.01)
+
+
+Parameters:
+   SVM-Type:  C-classification 
+ SVM-Kernel:  radial 
+       cost:  0.01 
+      gamma:  0.05555556 
+
+Number of Support Vectors:  621
+
+ ( 308 313 )
+
+
+Number of Classes:  2 
+
+Levels: 
+ CH MM
+
+[1] "Train - radial cost=0.01"
+
+       actual
+predict  CH  MM
+     CH 492 308
+     MM   0   0
+[1] "Error rate: 38.5 %"
+
+[1] "Test - radial cost=0.01"
+
+       actual
+predict  CH  MM
+     CH 161 109
+     MM   0   0
+[1] "Error rate: 40.3703703703704 %"
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost
+    1
+
+- best performance: 0.18 
+
+- Detailed performance results:
+   cost   error dispersion
+1  0.01 0.38500 0.04199868
+2  0.10 0.18125 0.03784563
+3  1.00 0.18000 0.03343734
+4 10.00 0.19375 0.03738408
+
+[1] "Train - radial best model"
+
+       actual
+predict  CH  MM
+     CH 453  81
+     MM  39 227
+[1] "Error rate: 15 %"
+
+[1] "Test - radial best model"
+
+       actual
+predict  CH  MM
+     CH 146  28
+     MM  15  81
+[1] "Error rate: 15.9259259259259 %"
+#+end_example
+
+The initial cost gives poor results, but with a cost of 1 chosen by CV
+we get slightly reduced training and test error.
+*** (g)
+#+BEGIN_QUOTE
+Repeat parts (b) through (e) using a support vector machine
+with a polynomial kernel. Set degree=2 .
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  model <- svm(Purchase~.-id, data=ojTrain, kernel="polynomial", cost=0.01, degree=2)
+  summary(model)
+  "Train - poly cost=0.01"
+  calcErrorRate(predict(model, ojTrain), ojTrain$Purchase)
+  "Test - poly cost=0.01"
+  calcErrorRate(predict(model, ojTest), ojTest$Purchase)
+
+  set.seed(42)
+  ojTune <- tune(svm, Purchase~.-id, data=ojTrain, kernel="polynomial",
+                      ranges=list(cost=costs), degree=2)
+  summary(ojTune)
+
+  model <- ojTune$best.model
+  "Train - poly best model"
+  calcErrorRate(predict(model, ojTrain), ojTrain$Purchase)
+  "Test - poly best model"
+  calcErrorRate(predict(model, ojTest), ojTest$Purchase)
+
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+svm(formula = Purchase ~ . - id, data = ojTrain, kernel = "polynomial", 
+    cost = 0.01, degree = 2)
+
+
+Parameters:
+   SVM-Type:  C-classification 
+ SVM-Kernel:  polynomial 
+       cost:  0.01 
+     degree:  2 
+      gamma:  0.05555556 
+     coef.0:  0 
+
+Number of Support Vectors:  621
+
+ ( 308 313 )
+
+
+Number of Classes:  2 
+
+Levels: 
+ CH MM
+
+[1] "Train - poly cost=0.01"
+
+       actual
+predict  CH  MM
+     CH 492 308
+     MM   0   0
+[1] "Error rate: 38.5 %"
+
+[1] "Test - poly cost=0.01"
+
+       actual
+predict  CH  MM
+     CH 161 109
+     MM   0   0
+[1] "Error rate: 40.3703703703704 %"
+
+Parameter tuning of ‘svm’:
+
+- sampling method: 10-fold cross validation 
+
+- best parameters:
+ cost
+   10
+
+- best performance: 0.19 
+
+- Detailed performance results:
+   cost   error dispersion
+1  0.01 0.38625 0.04308019
+2  0.10 0.31625 0.05529278
+3  1.00 0.19250 0.04216370
+4 10.00 0.19000 0.03425801
+
+[1] "Train - poly best model"
+
+       actual
+predict  CH  MM
+     CH 453  79
+     MM  39 229
+[1] "Error rate: 14.75 %"
+
+[1] "Test - poly best model"
+
+       actual
+predict  CH  MM
+     CH 144  30
+     MM  17  79
+[1] "Error rate: 17.4074074074074 %"
+#+end_example
+
+Again results with given cost were poor. With the chosen cost of 10
+from CV, we get a slightly lower training error but higher test error.
+*** (h)
+#+BEGIN_QUOTE
+Overall, which approach seems to give the best results on this
+data?
+#+END_QUOTE
+
+Results are similar, but the radial model with cost=1 gave the best
+training and test error.
