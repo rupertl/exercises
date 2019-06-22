@@ -1,0 +1,1007 @@
+#+TITLE: Introduction to Statistical Learning, Chapter 10: Unsupervised Learning
+#+AUTHOR: Rupert Lane
+#+EMAIL: rupert@rupert-lane.org
+#+PROPERTY: header-args:R :session *R*
+#+STARTUP: inlineimages
+#+STARTUP: latexpreview
+* Conceptual
+#+BEGIN_SRC R :exports code :results none
+  library(tidyverse)
+  library(magrittr)
+  library(ggplot2)
+  library(ISLR)
+
+  options(crayon.enabled = FALSE)
+#+END_SRC
+** Question 1
+Skipped.
+** Question 2
+#+BEGIN_QUOTE
+Suppose that we have four observations, for which we compute a
+dissimilarity matrix, given by
+#+END_QUOTE
+
+#+BEGIN_EXAMPLE
+[      0.3  0.4   0.7  ]
+[ 0.3       0.5   0.8  ]
+[ 0.4  0.5        0.45 ]
+[ 0.7  0.8  0.45       ]
+#+END_EXAMPLE
+
+#+BEGIN_QUOTE
+For instance, the dissimilarity between the first and second
+observations is 0.3, and the dissimilarity between the second and
+fourth observations is 0.8.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+On the basis of this dissimilarity matrix, sketch the dendrogram that
+results from hierarchically clustering these four observations using
+complete linkage. Be sure to indicate on the plot the height at which
+each fusion occurs, as well as the observations corresponding to each
+leaf in the dendrogram.
+#+END_QUOTE
+
+Running algorithm 10.2 by hand:
+- /i/=4, 4 clusters of individual points P1 P2 P3 P4
+  - P1 and P2 have the smallest dissimilarity, so fuse them to a
+    cluster K1.
+- /i/=3, K1 of P1 and P2, individual point clusters P3 and P4
+  - As we are using complete linkage, the dissimilarity between K1 and
+    P3 is the largest of the point differences, 0.5.
+  - So the smallest dissimilarity, 0.45, is between P3 and P4.
+  - P3 and P4 are fused into a cluster K2.
+- /i/=2, K1 of P1 and P2, K2 of P3 and P4
+  - As this is the last step, we would form a cluster K3 containing K1
+    and K2.
+- /i/=1, K3 of P1-P4, stop. 
+
+As this is small I can plot the dendrogram as an ASCII diagram:
+
+#+BEGIN_EXAMPLE
+  +------+
+  |      |
+  |    +---+
+  |    3   4
++---+
+1   2
+#+END_EXAMPLE
+
+*** (b)
+#+BEGIN_QUOTE
+Repeat (a), this time using single linkage clustering.
+#+END_QUOTE
+
+- /i/=4, 4 clusters of individual points P1 P2 P3 P4
+  - P1 and P2 have the smallest dissimilarity, so fuse them to a
+    cluster K1.
+- /i/=3, K1 of P1 and P2, individual point clusters P3 and P4
+  - As we are now using single linkage, the dissimilarity between K1 and
+    P3 is the smallest of the point differences, 0.4.
+  - So we fuse K1 and P3 together to form K2.
+- /i/=2, K2 of P1-P3, individual point P3
+  - As this is the last step, we would form a cluster K3 containing K2
+    and P4.
+- /i/=1, K3 of P1-P4, stop. 
+
+#+BEGIN_EXAMPLE
+    +---+
+    |   4
+  +---+
+  |   3   
++---+
+1   2
+#+END_EXAMPLE
+
+*** (c)
+#+BEGIN_QUOTE
+Suppose that we cut the dendogram obtained in (a) such that
+two clusters result. Which observations are in each cluster?
+#+END_QUOTE
+
+P1-P2 and P3-P4.
+*** (d)
+#+BEGIN_QUOTE
+Suppose that we cut the dendogram obtained in (b) such that
+two clusters result. Which observations are in each cluster?
+#+END_QUOTE
+
+P1-P2-P3 and P4.
+*** (e)
+#+BEGIN_QUOTE
+It is mentioned in the chapter that at each fusion in the dendrogram,
+the position of the two clusters being fused can be swapped without
+changing the meaning of the dendrogram. Draw a dendrogram that is
+equivalent to the dendrogram in (a), for which two or more of the
+leaves are repositioned, but for which the meaning of the dendrogram
+is the same.
+#+END_QUOTE
+
+#+BEGIN_EXAMPLE
+  +------+
+  |      |
+  |    +---+
+  |    4   3
++---+
+2   1
+#+END_EXAMPLE
+** Question 3
+#+BEGIN_QUOTE
+In this problem, you will perform /K/-means clustering manually, with
+/K/ = 2, on a small example with /n/ = 6 observations and /p/ = 2 features.
+The observations are as follows.
+
+| Obs | X₁ | X₂ |
+|-----+----+----|
+|   1 |  1 |  4 |
+|   2 |  1 |  3 |
+|   3 |  0 |  4 |
+|   4 |  5 |  1 |
+|   5 |  6 |  2 |
+|   6 |  4 |  0 |
+
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Plot the observations.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q03a.png
+  q3Data <- data_frame(x1=c(1,1,0,5,6,4), x2=c(4,3,4,1,2,0))
+  ggplot(q3Data) +
+    geom_point(aes(x=x1, y=x2)) +
+     labs(title = "Data for question 3") +
+     xlab("X₁") + ylab("X₂")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q03a.png]]
+
+*** (b)
+#+BEGIN_QUOTE
+Randomly assign a cluster label to each observation. You can use the
+~sample()~ command in R to do this. Report the cluster labels for each
+observation.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  q3Data %<>% 
+    mutate(label=sample(x=2, size=nrow(q3Data), replace=T))
+  q3Data
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 6 x 3
+     x1    x2 label
+  <dbl> <dbl> <int>
+1     1     4     1
+2     1     3     1
+3     0     4     1
+4     5     1     1
+5     6     2     2
+6     4     0     2
+#+end_example
+
+*** (c)
+#+BEGIN_QUOTE
+Compute the centroid for each cluster.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  centroids <- q3Data %>%
+    group_by(label) %>%
+    summarise_all(mean)
+  centroids
+#+END_SRC 
+
+#+RESULTS:
+: 
+: # A tibble: 2 x 3
+:   label    x1    x2
+:   <int> <dbl> <dbl>
+: 1     1  1.75     3
+: 2     2  5        1
+
+*** (d)
+#+BEGIN_QUOTE
+Assign each observation to the centroid to which it is closest, in
+terms of Euclidean distance. Report the cluster labels for each
+observation.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  dist(rbind(select(q3Data, -label), select(centroids, -label)))
+#+END_SRC 
+
+#+RESULTS:
+:          1        2        3        4        5        6        7
+: 2 1.000000                                                      
+: 3 1.000000 1.414214                                             
+: 4 5.000000 4.472136 5.830952                                    
+: 5 5.385165 5.099020 6.324555 1.414214                           
+: 6 5.000000 4.242641 5.656854 1.414214 2.828427                  
+: 7 1.250000 0.750000 2.015564 3.816084 4.366062 3.750000         
+: 8 5.000000 4.472136 5.830952 0.000000 1.414214 1.414214 3.816084
+
+Rows 7 and 8 show the distances from the two centroids
+
+#+BEGIN_SRC R :results output :exports both
+  q3Data %<>% mutate(label2=c(1,1,1,2,2,2))
+  q3Data
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 6 x 4
+     x1    x2 label label2
+  <dbl> <dbl> <int>  <dbl>
+1     1     4     1      1
+2     1     3     1      1
+3     0     4     1      1
+4     5     1     1      2
+5     6     2     2      2
+6     4     0     2      2
+#+end_example
+
+*** (e)
+#+BEGIN_QUOTE
+Repeat (c) and (d) until the answers obtained stop changing.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  centroids2 <- q3Data %>%
+    group_by(label2) %>%
+    summarise_all(mean)
+  centroids2
+#+END_SRC 
+
+#+RESULTS:
+: 
+: # A tibble: 2 x 4
+:   label2    x1    x2 label
+:    <dbl> <dbl> <dbl> <dbl>
+: 1      1 0.667  3.67  1   
+: 2      2 5      1     1.67
+
+#+BEGIN_SRC R :results output :exports both
+  dist(rbind(select(q3Data, -label, -label2), select(centroids2, -label, -label2)))
+#+END_SRC 
+
+#+RESULTS:
+:           1         2         3         4         5         6         7
+: 2 1.0000000                                                            
+: 3 1.0000000 1.4142136                                                  
+: 4 5.0000000 4.4721360 5.8309519                                        
+: 5 5.3851648 5.0990195 6.3245553 1.4142136                              
+: 6 5.0000000 4.2426407 5.6568542 1.4142136 2.8284271                    
+: 7 0.4714045 0.7453560 0.7453560 5.0881125 5.5876849 4.9553562          
+: 8 5.0000000 4.4721360 5.8309519 0.0000000 1.4142136 1.4142136 5.0881125
+
+The labels implied are the same, so we can stop.
+
+*** (f)
+#+BEGIN_QUOTE
+In your plot from (a), color the observations according to the
+cluster labels obtained.
+#+END_QUOTE
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q03f.png
+  ggplot(q3Data) +
+    geom_point(aes(x=x1, y=x2, colour=as.factor(label2))) +
+     labs(title = "Data for question 3 classified") +
+     xlab("X₁") + ylab("X₂")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q03f.png]]
+** Question 4
+#+BEGIN_QUOTE
+Suppose that for a particular data set, we perform hierarchical
+clustering using single linkage and using complete linkage. We obtain
+two dendrograms.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+At a certain point on the single linkage dendrogram, the clusters {1,
+2, 3} and {4, 5} fuse. On the complete linkage dendrogram, the
+clusters {1, 2, 3} and {4, 5} also fuse at a certain point. Which
+fusion will occur higher on the tree, or will they fuse at the same
+height, or is there not enough information to tell?
+#+END_QUOTE
+
+It's hard to say without more information, as it depends on the
+dissimilarity between individual points in {1,2,3} and {4,5} which are
+not given here.
+*** (b)
+#+BEGIN_QUOTE
+At a certain point on the single linkage dendrogram, the clusters {5}
+and {6} fuse. On the complete linkage dendrogram, the clusters {5} and
+{6} also fuse at a certain point. Which fusion will occur higher on
+the tree, or will they fuse at the same height, or is there not enough
+information to tell?
+#+END_QUOTE
+
+They should fuse at the same height, as single and complete linkage
+act the same where there is a single point in a cluster.
+** Question 5
+#+BEGIN_QUOTE
+In words, describe the results that you would expect if you performed
+/K/-means clustering of the eight shoppers in Figure 10.14, on the
+basis of their sock and computer purchases, with /K/ = 2. Give three
+answers, one for each of the variable scalings displayed. Explain.
+#+END_QUOTE
+
+a) I'd expect shoppers with low numbers of either item to make one
+cluster, high numbers of either in the other. The boundary would be
+heavily dependent on the number of socks bought as that has the most
+variance.
+
+b) Now that computer purchase has been scaled, I'd expect one cluster
+of computer purchasers and one with no computer purchased.
+
+c) As b), but even more resistant to number of socks purchased.
+** Question 6
+Skipped.
+* Applied
+** Question 7
+#+BEGIN_QUOTE
+In the chapter, we mentioned the use of correlation-based distance and
+Euclidean distance as dissimilarity measures for hierarchical
+clustering. It turns out that these two measures are almost
+equivalent: if each observation has been centered to have mean zero
+and standard deviation one, and if we let /rᵢⱼ/ denote the correlation
+between the /i/-th and /j/-th observations, then the quantity /1 − rᵢⱼ/ is
+proportional to the squared Euclidean distance between the /i/-th and /j/-th
+observations. On the ~USArrests~ data, show that this proportionality
+holds. 
+
+/Hint: The Euclidean distance can be calculated using the ~dist()~
+function, and correlations can be calculated using the ~cor()~ function./
+#+END_QUOTE
+
+We need to scale the values, calculate the two distance measures and
+then compare, which we'll do via linear regression.
+
+#+BEGIN_SRC R :results output :exports both
+  usarrests <- USArrests %>%
+     as_tibble %>%
+     mutate(Murder = as.vector(scale(Murder))) %>%
+     mutate(Assault = as.vector(scale(Assault))) %>%
+     mutate(Rape = as.vector(scale(Rape))) %>%
+     mutate(UrbanPop = as.vector(scale(UrbanPop)))
+  c <- as.dist(1 - cor(t(usarrests)))
+  d <- dist(usarrests)^2
+  summary(lm(c~d))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = c ~ d)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.72943 -0.57017 -0.00807  0.56747  1.15566 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 0.783488   0.027849   28.13   <2e-16 ***
+d           0.028584   0.002694   10.61   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.6172 on 1223 degrees of freedom
+Multiple R-squared:  0.08427,	Adjusted R-squared:  0.08352 
+F-statistic: 112.5 on 1 and 1223 DF,  p-value: < 2.2e-16
+#+end_example
+** Question 8
+#+BEGIN_QUOTE
+In Section 10.2.3, a formula for calculating PVE was given in Equation
+10.8. We also saw that the PVE can be obtained using the ~sdev~ output
+of the ~prcomp()~ function. On the ~USArrests~ data, calculate PVE in
+two ways:
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Using the ~sdev~ output of the ~prcomp()~ function, as was done in
+Section 10.2.3.
+#+END_QUOTE
+
+~usarrests~ contains scaled and centered data as calculated in the
+previous question.
+
+#+BEGIN_SRC R :results output :exports both
+  usaPR <- prcomp(usarrests)
+  usaPRVar <- usaPR$sdev^2
+  usaPRVar / sum(usaPRVar)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 0.62006039 0.24744129 0.08914080 0.04335752
+
+*** (b)
+#+BEGIN_QUOTE
+By applying Equation 10.8 directly. That is, use the ~prcomp()~
+function to compute the principal component loadings. Then,
+use those loadings in Equation 10.8 to obtain the PVE.
+These two approaches should give the same results.
+
+/Hint: You will only obtain the same results in (a) and (b) if the same/
+/data is used in both cases. For instance, if in (a) you performed/
+/~prcomp()~ using centered and scaled variables, then you must center/
+/and scale the variables before applying Equation 10.3 in (b)./
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  pve <- function(pc) { 
+    sum(colSums(usaPR$rotation[,pc] * t(usarrests))^2) / sum(usarrests^2)
+  }
+
+  sapply(c(1:4), pve)
+#+END_SRC 
+
+#+RESULTS:
+: 
+: [1] 0.62006039 0.24744129 0.08914080 0.04335752
+** Question 9
+#+BEGIN_QUOTE
+Consider the ~USArrests~ data. We will now perform hierarchical
+clustering on the states.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Using hierarchical clustering with complete linkage and
+Euclidean distance, cluster the states.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  usaHC <- hclust(dist(USArrests), method="complete")
+  usaHC
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Call:
+: hclust(d = dist(USArrests), method = "complete")
+: 
+: Cluster method   : complete 
+: Distance         : euclidean 
+: Number of objects: 50
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q09a.png
+  plot(usaHC, main="USArrests hierarchical clustering")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q09a.png]]
+
+
+*** (b)
+#+BEGIN_QUOTE
+Cut the dendrogram at a height that results in three distinct
+clusters. Which states belong to which clusters?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  cutree(usaHC, 3)
+  table(cutree(usaHC, 3))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+       Alabama         Alaska        Arizona       Arkansas     California 
+             1              1              1              2              1 
+      Colorado    Connecticut       Delaware        Florida        Georgia 
+             2              3              1              1              2 
+        Hawaii          Idaho       Illinois        Indiana           Iowa 
+             3              3              1              3              3 
+        Kansas       Kentucky      Louisiana          Maine       Maryland 
+             3              3              1              3              1 
+ Massachusetts       Michigan      Minnesota    Mississippi       Missouri 
+             2              1              3              1              2 
+       Montana       Nebraska         Nevada  New Hampshire     New Jersey 
+             3              3              1              3              2 
+    New Mexico       New York North Carolina   North Dakota           Ohio 
+             1              1              1              3              3 
+      Oklahoma         Oregon   Pennsylvania   Rhode Island South Carolina 
+             2              2              3              2              1 
+  South Dakota      Tennessee          Texas           Utah        Vermont 
+             3              2              2              3              3 
+      Virginia     Washington  West Virginia      Wisconsin        Wyoming 
+             2              2              3              3              2
+
+ 1  2  3 
+16 14 20
+#+end_example
+
+*** (c)
+#+BEGIN_QUOTE
+Hierarchically cluster the states using complete linkage and Euclidean
+distance, after scaling the variables to have standard deviation one.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  usaHCscaled <- hclust(dist(scale(USArrests)), method="complete")
+  usaHCscaled
+#+END_SRC 
+
+#+RESULTS:
+: 
+: Call:
+: hclust(d = dist(scale(USArrests)), method = "complete")
+: 
+: Cluster method   : complete 
+: Distance         : euclidean 
+: Number of objects: 50
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q09c.png
+  plot(usaHCscaled, main="USArrests hierarchical clustering, scaled")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q09c.png]]
+
+*** (d)
+#+BEGIN_QUOTE
+What effect does scaling the variables have on the hierarchical
+clustering obtained? In your opinion, should the variables be
+scaled before the inter-observation dissimilarities are computed?
+Provide a justification for your answer.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  cutree(usaHCscaled, 3)
+  table(cutree(usaHCscaled, 3))
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+       Alabama         Alaska        Arizona       Arkansas     California 
+             1              1              2              3              2 
+      Colorado    Connecticut       Delaware        Florida        Georgia 
+             2              3              3              2              1 
+        Hawaii          Idaho       Illinois        Indiana           Iowa 
+             3              3              2              3              3 
+        Kansas       Kentucky      Louisiana          Maine       Maryland 
+             3              3              1              3              2 
+ Massachusetts       Michigan      Minnesota    Mississippi       Missouri 
+             3              2              3              1              3 
+       Montana       Nebraska         Nevada  New Hampshire     New Jersey 
+             3              3              2              3              3 
+    New Mexico       New York North Carolina   North Dakota           Ohio 
+             2              2              1              3              3 
+      Oklahoma         Oregon   Pennsylvania   Rhode Island South Carolina 
+             3              3              3              3              1 
+  South Dakota      Tennessee          Texas           Utah        Vermont 
+             3              1              2              3              3 
+      Virginia     Washington  West Virginia      Wisconsin        Wyoming 
+             3              3              3              3              3
+
+ 1  2  3 
+ 8 11 31
+#+end_example
+
+The two versions break the tree differently. The scaled version puts
+more in the third cluster whereas unscaled distributes them more
+evenly. Given the different units for each variable, it makes sense to
+scale the data.
+** Question 10
+#+BEGIN_QUOTE
+In this problem, you will generate simulated data, and then perform
+PCA and /K/-means clustering on the data.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Generate a simulated data set with 20 observations in each of three
+classes (i.e. 60 observations total), and 50 variables. 
+
+/Hint: There are a number of functions in R that you can use to/
+/generate data. One example is the/ ~rnorm()~ /function;/ ~runif()~ /is another/
+/option. Be sure to add a mean shift to the observations in each class/
+/so that there are three distinct classes./
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  set.seed(42)
+  n <- 60
+  p <- 50
+  data <- matrix(rnorm(n*p, mean=0, sd=1), nrow=n, ncol=p)
+  data[1:20, 1] = 10
+  data[1:20, 2] = 10
+  data[21:40, 1] = -10
+  data[21:40, 2] = 10
+  data[41:60, 1] = -10
+  data[41:60, 2] = -10
+  glimpse(data)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  num [1:60, 1:50] 10 10 10 10 10 10 10 10 10 10 ...
+
+*** (b)
+#+BEGIN_QUOTE
+Perform PCA on the 60 observations and plot the first two principal
+component score vectors. Use a different color to indicate the
+observations in each of the three classes. If the three classes appear
+separated in this plot, then continue on to part (c). If not, then
+return to part (a) and modify the simulation so that there is greater
+separation between the three classes. Do not continue to part (c)
+until the three classes show at least some separation in the first two
+principal component score vectors.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  dataPCA <- prcomp(data)
+  summary(dataPCA)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Importance of components:
+                          PC1    PC2     PC3     PC4     PC5     PC6     PC7
+Standard deviation     11.684 6.7843 1.83706 1.75594 1.68080 1.63172 1.58431
+Proportion of Variance  0.595 0.2006 0.01471 0.01344 0.01231 0.01161 0.01094
+Cumulative Proportion   0.595 0.7956 0.81036 0.82380 0.83611 0.84772 0.85866
+                           PC8     PC9    PC10    PC11    PC12    PC13    PC14
+Standard deviation     1.54531 1.49348 1.39803 1.36967 1.31757 1.28846 1.25466
+Proportion of Variance 0.01041 0.00972 0.00852 0.00818 0.00757 0.00724 0.00686
+Cumulative Proportion  0.86907 0.87879 0.88731 0.89549 0.90305 0.91029 0.91715
+                          PC15    PC16    PC17    PC18    PC19   PC20    PC21
+Standard deviation     1.20792 1.18427 1.14620 1.13060 1.11185 1.0607 0.99672
+Proportion of Variance 0.00636 0.00611 0.00573 0.00557 0.00539 0.0049 0.00433
+Cumulative Proportion  0.92351 0.92963 0.93535 0.94092 0.94631 0.9512 0.95555
+                          PC22    PC23    PC24   PC25    PC26    PC27   PC28
+Standard deviation     0.97314 0.93193 0.90769 0.8835 0.84020 0.83038 0.7872
+Proportion of Variance 0.00413 0.00379 0.00359 0.0034 0.00308 0.00301 0.0027
+Cumulative Proportion  0.95967 0.96346 0.96705 0.9705 0.97353 0.97654 0.9792
+                          PC29    PC30    PC31    PC32   PC33    PC34    PC35
+Standard deviation     0.74807 0.74399 0.68801 0.65632 0.6051 0.59153 0.56092
+Proportion of Variance 0.00244 0.00241 0.00206 0.00188 0.0016 0.00153 0.00137
+Cumulative Proportion  0.98168 0.98409 0.98615 0.98803 0.9896 0.99115 0.99252
+                          PC36    PC37    PC38    PC39    PC40    PC41    PC42
+Standard deviation     0.50726 0.49960 0.45264 0.42424 0.40298 0.35309 0.33525
+Proportion of Variance 0.00112 0.00109 0.00089 0.00078 0.00071 0.00054 0.00049
+Cumulative Proportion  0.99364 0.99473 0.99562 0.99641 0.99712 0.99766 0.99815
+                          PC43    PC44    PC45    PC46    PC47    PC48    PC49
+Standard deviation     0.32426 0.30988 0.25405 0.23832 0.19604 0.18029 0.14243
+Proportion of Variance 0.00046 0.00042 0.00028 0.00025 0.00017 0.00014 0.00009
+Cumulative Proportion  0.99861 0.99903 0.99931 0.99956 0.99972 0.99987 0.99995
+                          PC50
+Standard deviation     0.10329
+Proportion of Variance 0.00005
+Cumulative Proportion  1.00000
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q10b.png
+  biplot(dataPCA)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q10b.png]]
+
+*** (c)
+#+BEGIN_QUOTE
+Perform /K/-means clustering of the observations with /K/ = 3. How
+well do the clusters that you obtained in K-means clustering compare
+to the true class labels?
+
+/Hint: You can use the ~table()~ function in R to compare the true/
+/class labels to the class labels obtained by clustering. Be careful/
+/how you interpret the results: K-means clustering will arbitrarily/
+/number the clusters, so you cannot simply check whether the true/
+/class labels and clustering labels are the same./
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  dataKM3 <- kmeans(data, 3, nstart=20)
+  dataKM3$cluster
+  table(dataKM3$cluster)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+: [39] 3 3 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+: 
+:  1  2  3 
+: 20 20 20
+
+This has divided the observations in three classes with 20
+observations each, with the splits matching how we set up the data.
+
+*** (d)
+#+BEGIN_QUOTE
+Perform K-means clustering with /K/ = 2. Describe your results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  dataKM2 <- kmeans(data, 2, nstart=20)
+  dataKM2$cluster
+  table(dataKM2$cluster)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+: [39] 2 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+: 
+:  1  2 
+: 20 40
+
+Here the first two real clusters got grouped into a single cluster.
+
+*** (e)
+#+BEGIN_QUOTE
+Now perform K-means clustering with K = 4, and describe your
+results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  dataKM4 <- kmeans(data, 4, nstart=20)
+  dataKM4$cluster
+  table(dataKM4$cluster)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+: [39] 4 4 1 1 1 1 3 3 1 1 3 3 3 3 3 3 3 3 3 1 1 1
+: 
+:  1  2  3  4 
+:  9 20 11 20
+
+The final cluster has been properly identified, but the first 2 are
+spread out over 3 clusters here.
+*** (f)
+#+BEGIN_QUOTE
+Now perform /K/-means clustering with /K/ = 3 on the first two
+principal component score vectors, rather than on the raw data. That
+is, perform /K/-means clustering on the 60 × 2 matrix of which the
+first column is the first principal component score vector, and the
+second column is the second principal component score vector. Comment
+on the results.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  dataKM3PC <- kmeans(dataPCA$x[,1:2], 3, nstart=20)
+  dataKM3PC$cluster
+  table(dataKM3PC$cluster)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+: [39] 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+: 
+:  1  2  3 
+: 20 20 20
+
+This has produced the same results as (c).
+
+*** (g)
+#+BEGIN_QUOTE
+Using the ~scale()~ function, perform K-means clustering with /K/ = 3
+on the data after scaling each variable to have standard deviation
+one. How do these results compare to those obtained in (b)? Explain.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  dataKMS3 <- kmeans(scale(data), 3, nstart=20)
+  dataKMS3$cluster
+  table(dataKMS3$cluster)
+#+END_SRC 
+
+#+RESULTS:
+: 
+:  [1] 2 2 2 1 2 1 1 2 1 2 3 3 3 1 1 1 1 2 1 3 3 1 1 3 2 3 1 1 3 1 2 2 3 1 1 1 3 3
+: [39] 1 2 1 1 3 3 1 2 1 3 2 2 2 2 2 2 2 2 2 3 3 3
+: 
+:  1  2  3 
+: 22 21 17
+
+I think we should compare with (c), the unscaled /K/-means clustering
+with 3 clusters, not (b), the PCA. In this case, the results are mixed
+up, as the scaling has reduced the difference between observations.
+** Question 11
+#+BEGIN_QUOTE
+On the book website, http://www.StatLearning.com/, there is a gene
+expression data set (Ch10Ex11.csv) that consists of 40 tissue samples
+with measurements on 1,000 genes. The first 20 samples are from
+healthy patients, while the second 20 are from a diseased group.
+#+END_QUOTE
+*** (a)
+#+BEGIN_QUOTE
+Load in the data using ~read.csv()~. You will need to select ~header=F~.
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  gene <- read_csv("http://www-bcf.usc.edu/~gareth/ISL/Ch10Ex11.csv", col_names=F)
+  glimpse(gene)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  .default = col_double()
+)
+See spec(...) for full column specifications.
+
+Observations: 1,000
+Variables: 40
+$ X1  <dbl> -0.96193340, -0.29252570, 0.25878820, -1.15213200, 0.19578280, 0.…
+$ X2  <dbl> 0.441802800, -1.139267000, -0.972844800, -2.213168000, 0.59330590…
+$ X3  <dbl> -0.97500510, 0.19583700, 0.58848580, -0.86152490, 0.28299210, -0.…
+$ X4  <dbl> 1.417504000, -1.281121000, -0.800258100, 0.630925300, 0.247147200…
+$ X5  <dbl> 0.8188148, -0.2514393, -1.8203980, 0.9517719, 1.9786680, -0.36409…
+$ X6  <dbl> 0.31629370, 2.51199700, -2.05892400, -1.16572400, -0.87101800, 1.…
+$ X7  <dbl> -0.02496682, -0.92220620, -0.06476437, -0.39155860, -0.98971500, …
+$ X8  <dbl> -0.06396600, 0.05954277, 1.59212400, 1.06361900, -1.03225300, -0.…
+$ X9  <dbl> 0.03149702, -1.40964500, -0.17311700, -0.35000900, -1.10965400, -…
+$ X10 <dbl> -0.35031060, -0.65671220, -0.12108740, -1.48905800, -0.38514230, …
+$ X11 <dbl> -0.7227299, -0.1157652, -0.1875790, -0.2432189, 1.6509570, -0.272…
+$ X12 <dbl> -0.2819547, 0.8259783, -1.5001630, -0.4330340, -1.7449090, 2.1765…
+$ X13 <dbl> 1.33751500, 0.34644960, -1.22873700, -0.03879128, -0.37888530, 1.…
+$ X14 <dbl> 0.70197980, -0.56954860, 0.85598900, -0.05789677, -0.67982610, -1…
+$ X15 <dbl> 1.0076160, -0.1315365, 1.2498550, -1.3977620, -2.1315840, 0.29815…
+$ X16 <dbl> -0.46538280, 0.69022900, -0.89808150, -0.15618710, -0.23017180, -…
+$ X17 <dbl> 0.63859510, -0.90903820, 0.87020580, -2.73598200, 0.46612430, 0.2…
+$ X18 <dbl> 0.28678070, 1.30264200, -0.22525290, 0.77561690, -1.80044900, -1.…
+$ X19 <dbl> -0.22707820, -1.67269500, 0.45028920, 0.61415620, 0.62629040, 0.2…
+$ X20 <dbl> -0.22004520, -0.52550400, 0.55144040, 2.01919400, -0.09772305, 0.…
+$ X21 <dbl> -1.24257300, 0.79797000, 0.14629430, 1.08113900, -0.29971080, 0.1…
+$ X22 <dbl> -0.1085056, -0.6897930, 0.1297400, -1.0766180, -0.5295591, 1.0689…
+$ X23 <dbl> -1.8642620, 0.8995305, 1.3042290, -0.2434181, -2.0235670, 1.23098…
+$ X24 <dbl> -0.50051220, 0.42858120, -1.66190800, 0.51348220, -0.51084020, 1.…
+$ X25 <dbl> -1.32500800, -0.67611410, -1.63037600, -0.51285780, 0.04600274, 0…
+$ X26 <dbl> 1.06341100, -0.53409490, -0.07742528, 2.55167600, 1.26803000, -0.…
+$ X27 <dbl> -0.29637120, -1.73250700, 1.30618200, -2.31430100, -0.74398680, 1…
+$ X28 <dbl> -0.12164570, -1.60344700, 0.79260020, -1.27647000, 0.22313190, -0…
+$ X29 <dbl> 0.08516605, -1.08362000, 1.55946500, -1.22927100, 0.85846280, -0.…
+$ X30 <dbl> 0.62417640, 0.03342185, -0.68851160, 1.43439600, 0.27472610, 0.16…
+$ X31 <dbl> -0.5095915, 1.7007080, -0.6154720, -0.2842774, -0.6929984, 1.1567…
+$ X32 <dbl> -0.216725500, 0.007289556, 0.009999363, 0.198945600, -0.845707200…
+$ X33 <dbl> -0.05550597, 0.09906234, 0.94581000, -0.09183320, -0.17749680, 0.…
+$ X34 <dbl> -0.4844491, 0.5638533, -0.3185212, 0.3496279, -0.1664908, 0.18295…
+$ X35 <dbl> -0.52158110, -0.25727520, -0.11788950, -0.29890970, 1.48315500, 0…
+$ X36 <dbl> 1.94913500, -0.58178050, 0.62136620, 1.51369600, -1.68794600, -0.…
+$ X37 <dbl> 1.32433500, -0.16988710, -0.07076396, 0.67118470, -0.14142960, 0.…
+$ X38 <dbl> 0.46814710, -0.54230360, 0.40168180, 0.01085530, 0.20077850, -1.1…
+$ X39 <dbl> 1.06110000, 0.31293890, -0.01622713, -1.04368900, -0.67594210, -0…
+$ X40 <dbl> 1.65597000, -1.28437700, -0.52655320, 1.62527500, 2.22061100, 0.6…
+#+end_example
+*** (b)
+#+BEGIN_QUOTE
+Apply hierarchical clustering to the samples using correlation-based
+distance, and plot the dendrogram. Do the genes separate the samples
+into the two groups? Do your results depend on the type of linkage
+used?
+#+END_QUOTE
+
+#+BEGIN_SRC R :results output :exports both
+  geneC <- as.dist(1 - cor(gene))
+  geneHC <- hclust(geneC, method="complete")
+#+END_SRC 
+
+#+RESULTS:
+: 
+:             Length Class  Mode     
+: merge       78     -none- numeric  
+: height      39     -none- numeric  
+: order       40     -none- numeric  
+: labels      40     -none- character
+: method       1     -none- character
+: call         3     -none- call     
+: dist.method  0     -none- NULL
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q11b_1.png
+  plot(geneHC, main="Gene data, hierarchical clustering, complete linkage")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q11b_1.png]]
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q11b_2.png
+  plot(hclust(geneC, method="single"), 
+       main="Gene data, hierarchical clustering, single linkage")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q11b_2.png]]
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q11b_3.png
+  plot(hclust(geneC, method="average"), 
+       main="Gene data, hierarchical clustering, average linkage")
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q11b_3.png]]
+
+The results do differ on linkage, with average doing the better split.
+*** (c)
+#+BEGIN_QUOTE
+Your collaborator wants to know which genes differ the most
+across the two groups. Suggest a way to answer this question,
+and apply it here.
+#+END_QUOTE
+
+We can use PCA here.
+
+#+BEGIN_SRC R :results output :exports both
+  genePCA <- prcomp(gene)
+  summary(genePCA)
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+Importance of components:
+                         PC1     PC2     PC3     PC4     PC5     PC6     PC7
+Standard deviation     3.008 1.20451 1.17258 1.15372 1.14593 1.13212 1.11845
+Proportion of Variance 0.187 0.02999 0.02842 0.02751 0.02714 0.02649 0.02586
+Cumulative Proportion  0.187 0.21698 0.24540 0.27292 0.30006 0.32655 0.35241
+                           PC8     PC9    PC10    PC11    PC12    PC13    PC14
+Standard deviation     1.10761 1.09734 1.09270 1.08463 1.08278 1.06751 1.05424
+Proportion of Variance 0.02536 0.02489 0.02468 0.02432 0.02423 0.02356 0.02297
+Cumulative Proportion  0.37777 0.40266 0.42734 0.45165 0.47589 0.49944 0.52242
+                          PC15    PC16    PC17    PC18    PC19    PC20    PC21
+Standard deviation     1.04642 1.04177 1.02644 1.02029 1.01073 1.00520 0.99851
+Proportion of Variance 0.02263 0.02243 0.02178 0.02152 0.02112 0.02089 0.02061
+Cumulative Proportion  0.54505 0.56748 0.58926 0.61078 0.63189 0.65278 0.67339
+                          PC22    PC23    PC24    PC25    PC26    PC27    PC28
+Standard deviation     0.99242 0.98250 0.97926 0.96736 0.95520 0.95053 0.93456
+Proportion of Variance 0.02036 0.01995 0.01982 0.01934 0.01886 0.01868 0.01805
+Cumulative Proportion  0.69374 0.71370 0.73352 0.75286 0.77172 0.79040 0.80845
+                          PC29    PC30    PC31    PC32   PC33    PC34    PC35
+Standard deviation     0.92927 0.92458 0.91709 0.90451 0.8960 0.89274 0.87658
+Proportion of Variance 0.01785 0.01767 0.01738 0.01691 0.0166 0.01647 0.01588
+Cumulative Proportion  0.82630 0.84397 0.86135 0.87827 0.8949 0.91134 0.92722
+                          PC36    PC37    PC38    PC39    PC40
+Standard deviation     0.86066 0.85895 0.84077 0.81779 0.81664
+Proportion of Variance 0.01531 0.01525 0.01461 0.01382 0.01378
+Cumulative Proportion  0.94253 0.95778 0.97239 0.98622 1.00000
+#+end_example
+
+#+BEGIN_SRC R :exports both :results graphics  :file img/ch10q11c.png
+  biplot(genePCA)
+#+END_SRC 
+
+#+RESULTS:
+[[file:img/ch10q11c.png]]
+
+#+BEGIN_SRC R :results output :exports both
+  pc1 <- genePCA$rotation[,1]
+  pc1
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+           X1            X2            X3            X4            X5 
+ 0.0209160782 -0.0043876236  0.0068361311 -0.0203797914 -0.0006176288 
+           X6            X7            X8            X9           X10 
+-0.0047802783  0.0062578161 -0.0017470260 -0.0009592731 -0.0164068314 
+          X11           X12           X13           X14           X15 
+-0.0069678547 -0.0006692837 -0.0122300778 -0.0005165976 -0.0075030656 
+          X16           X17           X18           X19           X20 
+ 0.0057299323 -0.0141052532  0.0062320456  0.0038207762  0.0174848952 
+          X21           X22           X23           X24           X25 
+-0.2296816867 -0.2466424440 -0.2199697651 -0.2213133893 -0.2141802550 
+          X26           X27           X28           X29           X30 
+-0.2078505975 -0.2241599553 -0.2308226738 -0.2220850629 -0.2189063173 
+          X31           X32           X33           X34           X35 
+-0.2291833754 -0.2113637288 -0.2278564375 -0.2305788770 -0.2041021014 
+          X36           X37           X38           X39           X40 
+-0.2206000694 -0.2234043403 -0.2328701943 -0.2259451669 -0.2220526019
+#+end_example
+
+So I think the larger (absolute) loadings here indicate more
+significance for the gene.
